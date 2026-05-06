@@ -1,3 +1,8 @@
+# Two-stage build: TypeScript must be compiled to JavaScript before running.
+# Stage 1 compiles the source. Stage 2 copies only the compiled output,
+# Final image only has compiled JS.
+# Keeps image lean by excluding the TypeScript compiler and source files.
+
 # Stage 1: Build
 FROM node:20-slim AS builder
 WORKDIR /app
