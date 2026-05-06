@@ -7,6 +7,9 @@ Test microservice for learning purposes. Built with buildx -
 
 Docker is [installed](https://docs.docker.com/get-docker/).
 
+Container can be built using these instructions, or in the base directory with Docker Compose. See base
+directory README for Docker Compose instructions.
+
 ## 1. Run the Image
 
 ### EITHER: Run the Pre-Built Image
@@ -35,16 +38,19 @@ Notes:
 
 Should return: Hello World!
 
-`curl http://localhost:8080`
+```bash
+curl http://localhost:8080
+```
 
 ## Stop the Container
 
-```
+```bash
 docker stop my-hello
 docker rm my-hello
 ```
 
 Notes:
 - `stop` sends a signal to the running process to shut down gracefully. Container
-  still exists and can be restarted
-- `rm` deletes the container entirely
+  still exists and can be restarted at this point.
+- `rm` deletes the container entirely. Container cannot be restarted at this
+  point. The image is unaffected and can be used to create a new container. 
