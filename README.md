@@ -1,6 +1,7 @@
 # CTIris
 Capstone Project for North Seattle College CS BS Program
 
+<<<<<<< HEAD
 
 ## Frontend SetUp
 Tech stack: React, TypeScript, Vite, Material UI
@@ -90,3 +91,25 @@ npm run dev
 7. Go to your web browser and open http://localhost:5173 to view the app
 
 
+=======
+## Run hello-docker using Docker Compose
+
+In the base directory:
+
+### Start
+```bash
+docker compose up -d
+```
+
+Notes:
+- Runs all services in `docker-compose.yml` file
+- `-d` runs the services in the background
+
+### Stop
+```bash
+docker compose down
+```
+
+Notes:
+- Automatically stops and removes all containers.
+>>>>>>> 763f855ccf6334b5e43c40d50790cd61af165d8f
