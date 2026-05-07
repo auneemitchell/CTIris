@@ -4,7 +4,7 @@
 # Keeps image lean by excluding the TypeScript compiler and source files.
 
 # Stage 1: Build
-FROM node:20-slim AS builder
+FROM node:24-slim AS builder
 WORKDIR /app
 
 # Install dependencies
@@ -17,7 +17,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # Stage 2: Runtime
-FROM node:20-slim
+FROM node:24-slim
 WORKDIR app
 
 # Only copy the compiled output from stage 1
