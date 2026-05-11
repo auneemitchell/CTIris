@@ -14,22 +14,3 @@ The backend Dockerfile automatically:
 1. Installs Python dependencies
 2. Configures Alembic
 3. Runs migrations against PostgreSQL
-
-## Alembic commands
-
-```bash
-alembic current
-alembic upgrade head
-alembic downgrade -1
-alembic downgrade base
-```
-
-## UUIDv7
-
-The baseline migration uses PostgreSQL built-in `uuidv7()`.
-`feeds.id` and `ingestion_log.id` default to this function.
-
-## Future API service
-
-This Dockerfile can be extended to run the backend API server instead of just migrations.
-
