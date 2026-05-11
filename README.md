@@ -5,38 +5,53 @@ Capstone Project for North Seattle College CS BS Program
 
 The migration workspace lives in `backend/`.
 
-### One-time setup
+### Automated setup with Docker
+
+Simply run:
 
 ```bash
-cd backend
+docker compose up
+```
+
+This automatically:
+- Starts PostgreSQL
+- Builds the backend container
+- Waits for PostgreSQL to be ready
+- Runs `alembic upgrade head` to apply all migrations
+
+The containers will be running in the foreground. Press `Ctrl+C` to stop.
+
+To run in the background:
+
+```bash
+docker compose up -d
+```
+
+To stop:
+
+```bash
+docker compose down
+```
+
+### Local development setup (if not using Docker)
+
+From `backend/`:
+
+```bash
 python -m venv .venv
 # Windows PowerShell
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-### Start PostgreSQL
-
-From the repository root:
-
-```bash
-docker compose up -d postgres
-```
-
-### Run migrations
-
-From `backend/`:
+Then run migrations:
 
 ```bash
 alembic upgrade head
 ```
 
-Rollback to base:
-
-```bash
-alembic downgrade base
-```
+### Migration commands
 
 Show current revision:
 
@@ -44,8 +59,14 @@ Show current revision:
 alembic current
 ```
 
+Downgrade to base:
+
+```bash
+alembic downgrade base
+```
+
 ### Notes
-- `DATABASE_URL` is loaded from environment or `.env` (see `backend/.env.example`).
+- `DATABASE_URL` is passed via environment in Docker or loaded from `.env` for local development.
 - Baseline schema creates `feeds`, `stix_objects`, and `ingestion_log`.
 - `feeds.id` and `ingestion_log.id` use UUIDv7 defaults via `generate_uuid_v7()`.
 
