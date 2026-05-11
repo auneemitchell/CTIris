@@ -33,38 +33,6 @@ To stop:
 docker compose down
 ```
 
-### Local development setup (if not using Docker)
-
-From `backend/`:
-
-```bash
-python -m venv .venv
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-```
-
-Then run migrations:
-
-```bash
-alembic upgrade head
-```
-
-### Migration commands
-
-Show current revision:
-
-```bash
-alembic current
-```
-
-Downgrade to base:
-
-```bash
-alembic downgrade base
-```
-
 ### Notes
 - `DATABASE_URL` is passed via environment in Docker or loaded from `.env` for local development.
 - Baseline schema creates `feeds`, `stix_objects`, and `ingestion_log`.

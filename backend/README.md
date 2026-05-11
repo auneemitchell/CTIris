@@ -2,7 +2,7 @@
 
 This directory owns database schema migrations for CTIris and will eventually contain the backend API service.
 
-## Docker setup (recommended)
+## Docker setup
 
 From the repository root, simply run:
 
@@ -14,15 +14,6 @@ The backend Dockerfile automatically:
 1. Installs Python dependencies
 2. Configures Alembic
 3. Runs migrations against PostgreSQL
-
-## Local development setup
-
-If you prefer local development without Docker:
-
-1. Create and activate a virtual environment.
-2. Install dependencies from `requirements.txt`.
-3. Copy `.env.example` to `.env` and adjust `DATABASE_URL` if needed.
-4. Run `alembic upgrade head`.
 
 ## Alembic commands
 
