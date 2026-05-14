@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the Vite configuration and source files
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.app.json tsconfig.node.json ./
 COPY vite.config.ts ./
 COPY index.html ./
 COPY src/ ./src/
