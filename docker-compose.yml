@@ -1,5 +1,32 @@
 services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ctiris
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend-migrations:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   hello-docker:
     image: alephnaaught/hello-docker:v1.0
     ports:
       - "8080:8080"
+
+volumes:
+  postgres-data:
