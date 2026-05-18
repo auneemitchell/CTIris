@@ -28,5 +28,13 @@ services:
     ports:
       - "8080:8080"
 
+  ingestion-svc:
+    build: ./ingestion-svc
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
+    depends_on:
+      backend-migrations:
+        condition: service_completed_successfully
+
 volumes:
   postgres-data:

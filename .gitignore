@@ -11,6 +11,7 @@ __pycache__/
 *.pyo
 .venv/
 venv/
+.pytest_cache/
 
 # Environment
 .env
@@ -18,3 +19,6 @@ venv/
 
 # Docker
 .docker/
+
+# Code coverage
+.coverage

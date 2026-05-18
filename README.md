@@ -6,18 +6,19 @@ Capstone Project for North Seattle College CS BS Program
 2. [Contributing](#contributing)
 3. [License](#license)
 
-## Run hello-docker using Docker Compose
+## Run with Docker Compose
 
 In the base directory:
 
 ### Start
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
 Notes:
-- Runs all services in `docker-compose.yml` file
-- `-d` runs the services in the background
+- Builds all service images and starts them
+- Startup order: `postgres` → `backend-migrations` → `ingestion-svc`
+- `-d` flag runs services in the background; omit `--build` on subsequent runs if no code changed
 
 ### Stop
 ```bash
@@ -25,7 +26,14 @@ docker compose down
 ```
 
 Notes:
-- Automatically stops and removes all containers.
+- Stops and removes all containers. The `postgres-data` volume is preserved so data survives restarts.
+- Add `-v` to also wipe the database: `docker compose down -v`
+
+## Services
+
+| Service | Description | Docs |
+|---|---|---|
+| `ingestion-svc` | Polls MITRE ATT&CK TAXII, upserts STIX objects into Postgres | [ingestion-svc/README.md](ingestion-svc/README.md) |
 
 ## Contributing
 **Project Manager:** Aune Mitchell
@@ -34,6 +42,7 @@ Notes:
 - Jovy Ann Nelson
 - Kayla Rieck
 - Sandra Gran
+- Aune Mitchell
 
 ## License
 This project is licensed under the MIT License. Please refer to the [LICENSE]() for more details.

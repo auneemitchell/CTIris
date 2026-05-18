@@ -1,0 +1,10 @@
+[MASTER]
+ignore = .venv
+
+[MESSAGES CONTROL]
+disable =
+    import-error
+
+[FORMAT]
+# Match Black line length.
+max-line-length = 88
