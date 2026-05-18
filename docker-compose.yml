@@ -16,7 +16,7 @@ services:
       retries: 5
 
   backend-migrations:
-    build: ./backend
+    build: ./ctiris_db
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
     depends_on:
