@@ -22,6 +22,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart: "no"
 
   hello-docker:
     image: alephnaaught/hello-docker:v1.0
@@ -29,9 +30,12 @@ services:
       - "8080:8080"
 
   ingestion-svc:
-    build: ./ingestion-svc
+    build:
+      context: .
+      dockerfile: ingestion-svc/Dockerfile
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
+      FERNET_KEY: GbUSRMaQH_jCOXZ8ydcxB94FfU1st7y_IgvA1edUbBU=
     depends_on:
       backend-migrations:
         condition: service_completed_successfully

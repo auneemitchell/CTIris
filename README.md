@@ -17,7 +17,7 @@ docker compose up --build
 
 Notes:
 - Builds all service images and starts them
-- Startup order: `postgres` → `backend-migrations` → `ingestion-svc`
+- Startup order: `postgres` → `migrate` → `ingestion-svc`
 - `-d` flag runs services in the background; omit `--build` on subsequent runs if no code changed
 
 ### Stop

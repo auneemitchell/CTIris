@@ -81,6 +81,6 @@ The scheduler SYNC_INTERVAL_HOURS instead will need to updated to short time lik
   This will makes each feed's `poll_frequency_min` the schedule, configurable
   per feed from the UI.
 
-Currently db.py mirrors the Alembic table definitions manually, which isn't scalable if the schema changes. This makes it easier to run unit tests without a live database. Once the backend has SQLAlchemy ORM models, they can be moved into a shared package and imported into db.py to remove the manual mirror requirement.
+The service now imports the shared SQLAlchemy ORM models from `ctiris_db`, so there is one source of truth for the table definitions. That removes the need to maintain a separate manual mirror inside `db.py`.
 
 Once the API allows adding credentials for feeds (if required), we'll need the auth_credentials column in the feeds table to encrypt at the application level (i.e. using .env encryption key), since the TAXII client will need to pass the username and password/auth object to Server().

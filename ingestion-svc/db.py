@@ -1,15 +1,9 @@
 """
 Database connection and query helpers for the ingestion service.
 
-This module mirrors the schema defined in
-``backend/alembic/versions/20260509_01_initial_schema.py`` but intentionally
-does NOT manage migrations — that is the backend service's responsibility.
-The table definitions here exist solely so SQLAlchemy can build INSERT/UPDATE
-statements; they must be kept in sync with the Alembic schema by hand if the
-schema ever changes.
-
-Future: once the backend adds SQLAlchemy ORM models (DeclarativeBase), import
-those shared models here instead of maintaining this manual mirror.
+The ingestion service now uses the shared ORM models from ``ctiris_db`` as
+the single source of truth for table definitions. This keeps the DB contract
+in one place while still letting the service build SQLAlchemy statements.
 """
 
 import logging
@@ -18,7 +12,9 @@ import uuid
 from datetime import datetime
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB, UUID, insert as pg_insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from ctiris_db.models import Feed, IngestionLog, StixObject
 
 logger = logging.getLogger(__name__)
 
@@ -28,73 +24,15 @@ MITRE_FEED_NAME = "MITRE ATT&CK Enterprise"
 MITRE_FEED_URL = "https://attack-taxii.mitre.org/taxii2/"
 MITRE_POLL_FREQUENCY_MIN = 60  # value seeded into feeds.poll_frequency_min
 
-# Number of STIX objects sent in a single INSERT statement.  Larger batches
+# Number of STIX objects sent in a single INSERT statement. Larger batches
 # are faster but consume more memory and risk hitting Postgres parameter limits
-# (~65 k per statement).  500 rows × ~10 columns = well within safe bounds.
+# (~65 k per statement).  500 rows × ~10 columns is well within safe bounds.
 _CHUNK_SIZE = 500
 
-_metadata = sa.MetaData()
-
-feeds_table = sa.Table(
-    "feeds",
-    _metadata,
-    sa.Column(
-        "id",
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=sa.text("uuidv7()"),
-    ),
-    sa.Column("name", sa.String(255)),
-    sa.Column("url", sa.String(2048)),
-    # auth_credentials stores raw bytes from the API.  Before this column is
-    # used, credentials MUST be encrypted at the application layer (e.g. with
-    # Fernet) using a key supplied via environment variable.  Never store
-    # plaintext credentials here.
-    sa.Column("auth_credentials", sa.LargeBinary, nullable=True),
-    sa.Column("enabled", sa.Boolean),
-    sa.Column("poll_frequency_min", sa.Integer),
-    sa.Column("last_polled_at", sa.DateTime(timezone=True), nullable=True),
-    sa.Column("status", sa.String(32)),
-    sa.Column(
-        "created_at",
-        sa.DateTime(timezone=True),
-        server_default=sa.text("now()"),
-    ),
-)
-
-stix_objects_table = sa.Table(
-    "stix_objects",
-    _metadata,
-    sa.Column("stix_id", sa.String(128), primary_key=True),
-    sa.Column("type", sa.String(64)),
-    sa.Column("feed_id", UUID(as_uuid=True), nullable=True),
-    sa.Column("properties", JSONB),
-    sa.Column("stix_created", sa.DateTime(timezone=True), nullable=True),
-    sa.Column("stix_modified", sa.DateTime(timezone=True), nullable=True),
-    sa.Column(
-        "ingested_at",
-        sa.DateTime(timezone=True),
-        server_default=sa.text("now()"),
-    ),
-)
-
-ingestion_log_table = sa.Table(
-    "ingestion_log",
-    _metadata,
-    sa.Column(
-        "id",
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=sa.text("uuidv7()"),
-    ),
-    sa.Column("feed_id", UUID(as_uuid=True), nullable=False),
-    sa.Column("polled_at", sa.DateTime(timezone=True)),
-    sa.Column("items_received", sa.Integer),
-    sa.Column("items_new", sa.Integer),
-    sa.Column("items_updated", sa.Integer),
-    sa.Column("status", sa.String(32)),
-    sa.Column("errors", JSONB, nullable=True),
-)
+# Shared ORM models are the source of truth; use their table metadata here.
+feeds_table = Feed.__table__
+stix_objects_table = StixObject.__table__
+ingestion_log_table = IngestionLog.__table__
 
 
 def get_engine() -> sa.Engine:
