@@ -36,5 +36,15 @@ services:
       backend-migrations:
         condition: service_completed_successfully
 
+  query-svc:
+    build: ./query-svc
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
+    ports:
+      - "8000:8000"
+    depends_on:
+      backend-migrations:
+        condition: service_completed_successfully
+
 volumes:
   postgres-data:
