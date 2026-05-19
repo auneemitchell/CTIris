@@ -1,0 +1,8 @@
+tests/
+requirements-dev.txt
+.pytest_cache/
+.coverage
+__pycache__/
+*.pyc
+.pylintrc
+README.md

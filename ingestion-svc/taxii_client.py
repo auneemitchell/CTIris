@@ -13,6 +13,7 @@ below simply serve as the defaults while only MITRE is configured.
 import logging
 from datetime import datetime
 
+from taxii2client.common import _HTTPConnection
 from taxii2client.v21 import Server
 
 logger = logging.getLogger(__name__)
@@ -27,29 +28,30 @@ MITRE_COLLECTION_TITLE = "enterprise"  # matched case-insensitively
 TAXII_TIMEOUT = 30
 
 
-def _apply_timeout(server: Server) -> None:
-    """Inject TAXII_TIMEOUT into a Server's internal requests session.
+def _make_conn() -> _HTTPConnection:
+    """Return a TAXII connection with TAXII_TIMEOUT pre-applied.
 
-    ``taxii2client.v21.Server`` does not expose a public API for setting a
-    request timeout, so we patch ``server._conn.session.send`` — the single
-    choke-point through which all HTTP calls pass — after instantiation.
+    Constructs ``_HTTPConnection`` and patches its session *before* the conn
+    is passed to ``Server``, so the discovery request is covered from the
+    very first call — not just subsequent requests.
 
     Wrapped in a try/except so that if taxii2client's internals ever change,
     the service degrades (no timeout) rather than crashing.
     """
+    conn = _HTTPConnection(user=None, password=None, verify=True, proxies=None, version="2.1")
     try:
-        session = server._conn.session  # type: ignore[attr-defined]  # pylint: disable=protected-access
-        _orig_send = session.send
+        _orig_send = conn.session.send
 
         def send_with_timeout(request, **kwargs):
             kwargs.setdefault("timeout", TAXII_TIMEOUT)
             return _orig_send(request, **kwargs)
 
-        session.send = send_with_timeout
+        conn.session.send = send_with_timeout
     except AttributeError:
         logger.warning(
             "Could not inject request timeout — taxii2client internals may have changed"
         )
+    return conn
 
 
 def _find_collection(server: Server, title_hint: str):
@@ -152,8 +154,7 @@ def fetch_stix_objects(
         List of raw STIX 2.1 object dicts exactly as returned by the server.
     """
     logger.info("Connecting to TAXII server: %s", server_url)
-    server = Server(server_url)
-    _apply_timeout(server)
+    server = Server(server_url, conn=_make_conn())
     collection = _find_collection(server, title_hint=collection_title)
 
     kwargs: dict = {}
