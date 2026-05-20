@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
 
-  backend-migrations:
+  db-svc:
     build: ./db-svc
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
@@ -35,9 +35,8 @@ services:
       dockerfile: ingestion-svc/Dockerfile
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
-      FERNET_KEY: GbUSRMaQH_jCOXZ8ydcxB94FfU1st7y_IgvA1edUbBU=
     depends_on:
-      backend-migrations:
+      db-svc:
         condition: service_completed_successfully
 
 volumes:
