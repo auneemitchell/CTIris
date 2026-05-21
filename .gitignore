@@ -22,3 +22,6 @@ venv/
 
 # Code coverage
 .coverage
+
+# Database metadata
+db-svc/src/ctiris_db.egg-info

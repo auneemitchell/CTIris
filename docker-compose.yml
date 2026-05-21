@@ -15,13 +15,14 @@ services:
       timeout: 5s
       retries: 5
 
-  backend-migrations:
-    build: ./backend
+  db-svc:
+    build: ./db-svc
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
     depends_on:
       postgres:
         condition: service_healthy
+    restart: "no"
 
   hello-docker:
     image: alephnaaught/hello-docker:v1.0
@@ -29,11 +30,13 @@ services:
       - "8080:8080"
 
   ingestion-svc:
-    build: ./ingestion-svc
+    build:
+      context: .
+      dockerfile: ingestion-svc/Dockerfile
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
     depends_on:
-      backend-migrations:
+      db-svc:
         condition: service_completed_successfully
 
   query-svc:

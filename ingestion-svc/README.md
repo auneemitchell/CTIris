@@ -70,7 +70,7 @@ docker compose exec postgres psql -U postgres -d ctiris \
 ## TO DO
 
 When the API and frontend are ready, users will add TAXII feeds through the UI.
-We'll need to remove the MITRE default constants and instead pull the feed list from the DB. 
+We'll need to remove the MITRE default constants and instead pull the feed list from the DB.
 The scheduler SYNC_INTERVAL_HOURS instead will need to updated to short time like 1 minute to check what rows are due using the feeds table:
   ```sql
   SELECT * FROM feeds
@@ -81,6 +81,6 @@ The scheduler SYNC_INTERVAL_HOURS instead will need to updated to short time lik
   This will makes each feed's `poll_frequency_min` the schedule, configurable
   per feed from the UI.
 
-Currently db.py mirrors the Alembic table definitions manually, which isn't scalable if the schema changes. This makes it easier to run unit tests without a live database. Once the backend has SQLAlchemy ORM models, they can be moved into a shared package and imported into db.py to remove the manual mirror requirement.
+The service now imports the shared SQLAlchemy ORM models from `db-svc`, so there is one source of truth for the table definitions. That removes the need to maintain a separate manual mirror inside `db.py`.
 
 Once the API allows adding credentials for feeds (if required), we'll need the auth_credentials column in the feeds table to encrypt at the application level (i.e. using .env encryption key), since the TAXII client will need to pass the username and password/auth object to Server().
