@@ -24,11 +24,6 @@ services:
         condition: service_healthy
     restart: "no"
 
-  hello-docker:
-    image: alephnaaught/hello-docker:v1.0
-    ports:
-      - "8080:8080"
-
   ingestion-svc:
     build:
       context: .
@@ -46,7 +41,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      backend-migrations:
+      db-svc:
         condition: service_completed_successfully
 
 volumes:
