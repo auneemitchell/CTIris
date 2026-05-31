@@ -38,12 +38,18 @@ services:
     build: ./query-svc
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
-    ports:
-      - "8000:8000"
+      ALLOWED_ORIGIN: http://localhost:5173
     depends_on:
       db-svc:
         condition: service_completed_successfully
-  
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - query-svc
+
   frontend:
     build: ./frontend
     ports:
@@ -52,7 +58,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      - query-svc
+      - gateway
 
 volumes:
   postgres-data:

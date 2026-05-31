@@ -17,7 +17,7 @@ app = FastAPI(title="CTIris Query Service")
 # Requests should come from the API gateway, not directly from the frontend.
 # Set ALLOWED_ORIGIN to the gateway's URL when it is deployed.
 # TODO: add ALLOWED_ORIGIN=http://api-gateway:PORT to query-svc environment in docker-compose.yml
-_allowed_origin = os.environ.get("ALLOWED_ORIGIN", "http://localhost:3000")
+_allowed_origin = os.environ.get("ALLOWED_ORIGIN", "http://localhost")
 
 app.add_middleware(
     CORSMiddleware,
