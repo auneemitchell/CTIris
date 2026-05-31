@@ -6,5 +6,16 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    watch: {
+      usePolling: true,
+    },
+    hmr: {
+      clientPort: 5173,
+    },
+    proxy: {
+      '/stix': 'http://query-svc:8000',
+      '/feeds': 'http://query-svc:8000',
+      '/ingestion-log': 'http://query-svc:8000'
+    },
   },
 })
