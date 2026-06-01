@@ -16,7 +16,7 @@ export default function StixData() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch('/stix').then(res => {
+        fetch('http://localhost/api/stix').then(res => {
             if (!res.ok) {
                 throw new Error(`Server error: ${res.status}`);
             }

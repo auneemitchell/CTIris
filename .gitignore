@@ -1,6 +1,9 @@
 # Mac
 .DS_Store
 
+# Local-only Claude context file
+CLAUDE.md
+
 # Node/TypeScript
 node_modules/
 dist/
