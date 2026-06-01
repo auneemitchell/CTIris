@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Avatar, Box, Chip, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Chip, Typography } from '@mui/material';
+import HelpBadge from './HelpBadge';
 import { COLORS } from '../constants/themeColors';
 import HeaderIcon from '../assets/CTIris-Icon.png';
 import { api } from '../api/client';
@@ -42,27 +43,10 @@ export default function DashboardHeader() {
           <Typography variant="subtitle2" sx={{ color: COLORS.textPrimary, fontWeight: 'semibold' }}>
             CYBER THREAT INTELLIGENCE DASHBOARD
           </Typography>
-          <Tooltip
-            title="Cyber Threat Intelligence (CTI) is information about who attacks computer systems, how they do it, and what tools they use. Think of CTIris as a personal wiki — you choose which public threat feeds to pull from, and the dashboard organizes everything into browsable, searchable entries using the STIX standard."
-            placement="right"
-            arrow
-          >
-            <Typography sx={{
-              color: COLORS.textMuted,
-              fontSize: '0.6rem',
-              bgcolor: 'rgba(255,255,255,0.07)',
-              borderRadius: '50%',
-              width: 15,
-              height: 15,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'help',
-              fontFamily: 'monospace',
-              userSelect: 'none',
-              flexShrink: 0,
-            }}>?</Typography>
-          </Tooltip>
+          <HelpBadge
+            size="sm"
+            tooltip="Cyber Threat Intelligence (CTI) is information about who attacks computer systems, how they do it, and what tools they use. Think of CTIris as a personal wiki — you choose which public threat feeds to pull from, and the dashboard organizes everything into browsable, searchable entries using the STIX standard."
+          />
         </Box>
       </Box>
       <Box sx={{ display: 'flex', gap: 2 }}>

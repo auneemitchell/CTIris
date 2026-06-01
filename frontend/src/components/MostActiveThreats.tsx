@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Box, Chip, CircularProgress, Typography } from '@mui/material';
+import { Box, Chip, Typography } from '@mui/material';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorDisplay from './ErrorDisplay';
 import { api } from '../api/client';
 import type { StixObject } from '../api/client';
 import { COLORS } from '../constants/themeColors';
+import { countByRelationships } from '../utils/countByRelationships';
 
 interface Props {
+  /** Relationship objects fetched by DashboardTab and shared with this widget. */
   relationships: StixObject[];
 }
 
+/** Shape of one ranked entry after counting. */
 interface ThreatEntry {
   stix_id: string;
   name: string;
@@ -15,6 +20,7 @@ interface ThreatEntry {
   count: number;
 }
 
+/** Bar color per entity type. */
 const TYPE_COLORS: Record<string, string> = {
   'threat-actor':  '#ff6b6b',
   'intrusion-set': '#ffa94d',
@@ -24,6 +30,22 @@ function typeColor(type: string) {
   return TYPE_COLORS[type] ?? COLORS.accentSecondary;
 }
 
+/**
+ * Ranked list of the most relationship-connected threat actors and intrusion sets.
+ *
+ * How the ranking works:
+ * 1. Fetch all threat-actor and intrusion-set entities from the API.
+ * 2. For each relationship in the prop, check if source_ref or target_ref
+ *    matches a known entity and increment its count.
+ * 3. Sort descending, take top 10.
+ *
+ * The inline bar width is count/maxCount so the top entry always fills
+ * the bar completely and everything else scales relative to it.
+ *
+ * Relationships are passed as a prop from DashboardTab rather than fetched
+ * here to avoid a duplicate network request (MostActiveMalware needs the
+ * same data).
+ */
 export default function MostActiveThreats({ relationships }: Props) {
   const [entities, setEntities] = useState<StixObject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +61,8 @@ export default function MostActiveThreats({ relationships }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress sx={{ color: COLORS.accentSecondary }} /></Box>;
-  if (error) return <Typography variant="body2" sx={{ color: 'error.main', fontFamily: 'monospace' }}>Failed to load: {error}</Typography>;
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorDisplay message={error} />;
 
   if (!relationships.length) {
     return (
@@ -51,13 +73,7 @@ export default function MostActiveThreats({ relationships }: Props) {
   }
 
   const entityMap = new Map(entities.map(e => [e.stix_id, e]));
-
-  const counts: Record<string, number> = {};
-  for (const rel of relationships) {
-    const p = rel.properties as { source_ref?: string; target_ref?: string };
-    if (p.source_ref && entityMap.has(p.source_ref)) counts[p.source_ref] = (counts[p.source_ref] ?? 0) + 1;
-    if (p.target_ref && entityMap.has(p.target_ref)) counts[p.target_ref] = (counts[p.target_ref] ?? 0) + 1;
-  }
+  const counts = countByRelationships(entityMap, relationships);
 
   const top: ThreatEntry[] = Object.entries(counts)
     .sort(([, a], [, b]) => b - a)

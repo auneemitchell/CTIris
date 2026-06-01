@@ -1,3 +1,16 @@
+/**
+ * Shared STIX type definitions used across the frontend.
+ *
+ * Having one list here means DashboardTab (stat cards) and StixBrowser
+ * (type filter dropdown) always show the same types with the same labels
+ * and definitions — previously they had separate hand-maintained lists
+ * that had already drifted apart.
+ *
+ * ⚠️ DashboardTab fires one API count request per entry in STIX_TYPES on
+ * page load. The nginx gateway has a burst limit — if you add many types
+ * here, check gateway/nginx.conf and raise the burst value if needed.
+ */
+
 export interface StixTypeInfo {
   key: string;
   label: string;
@@ -20,4 +33,5 @@ export const STIX_TYPES: StixTypeInfo[] = [
   { key: 'sighting',         label: 'Sighting',          def: 'A record that a STIX object was observed in the real world, such as an indicator being seen in a network log.' },
 ];
 
+/** Flat list of type key strings — use this when you only need the key, not the label or definition. */
 export const STIX_TYPE_KEYS = STIX_TYPES.map(t => t.key);

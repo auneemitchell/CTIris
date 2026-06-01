@@ -1,40 +1,10 @@
 import { useState } from 'react';
-import { Box, Tab, Tabs, Tooltip, Typography } from '@mui/material';
+import { Box, Tab, Tabs } from '@mui/material';
 import { COLORS } from '../constants/themeColors';
+import SectionHeader from './SectionHeader';
 import DashboardTab from './DashboardTab';
 import FeedsTab from './FeedsTab';
 import StixBrowser from './StixBrowser';
-
-/**
- * Reusable section heading with an educational ? tooltip badge.
- * Used by all three tab panels so the badge style stays consistent.
- */
-function SectionHeader({ title, tooltip }: { title: string; tooltip: string }) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-      <Typography variant="h6" sx={{ color: COLORS.textColor, fontWeight: 'bold' }}>
-        {title}
-      </Typography>
-      <Tooltip title={tooltip} placement="right" arrow>
-        <Typography sx={{
-          color: COLORS.textMuted,
-          fontSize: '0.7rem',
-          bgcolor: 'rgba(255,255,255,0.07)',
-          borderRadius: '50%',
-          width: 18,
-          height: 18,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'help',
-          flexShrink: 0,
-          fontFamily: 'monospace',
-          userSelect: 'none',
-        }}>?</Typography>
-      </Tooltip>
-    </Box>
-  );
-}
 
 /**
  * Main content area — three-tab layout: Dashboard, Feeds, STIX Objects.

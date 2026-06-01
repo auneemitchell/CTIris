@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Box, CircularProgress, Drawer, FormControl, IconButton,
+  Box, Drawer, FormControl, IconButton,
   InputAdornment, InputLabel, MenuItem, Paper, Select,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Typography,
@@ -8,23 +8,52 @@ import {
 import { api } from '../api/client';
 import type { StixObject } from '../api/client';
 import { COLORS } from '../constants/themeColors';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorDisplay from './ErrorDisplay';
 
 import { STIX_TYPE_KEYS } from '../constants/stixTypes';
 
+/**
+ * Returns properties.name for most STIX types, falls back to stix_id for
+ * types that don't have a name field (e.g. relationship, sighting).
+ */
 function getName(obj: StixObject): string {
   const name = (obj.properties as { name?: string }).name;
   return name ?? obj.stix_id;
 }
 
+/** Returns '—' when the date is missing rather than rendering 'Invalid Date'. */
 function formatDate(d: string | null | undefined) {
   if (!d) return '—';
   return new Date(d).toLocaleString();
 }
 
 interface Props {
+  /**
+   * Pre-select a type filter on mount. Set by DashboardBody when the user
+   * clicks a stat card, so the browser opens already filtered to that type.
+   */
   defaultType?: string;
 }
 
+/**
+ * Searchable, filterable table of all ingested STIX objects.
+ *
+ * Type filter (server-side): changing the dropdown fires a new API request
+ * because result sets are too large to fetch all types upfront.
+ * An AbortController cancels the previous in-flight request when the filter
+ * changes quickly, preventing stale results from overwriting newer ones.
+ *
+ * Search (client-side): filters the already-fetched array by name or stix_id
+ * without an extra API call.
+ *
+ * Detail drawer: clicking a row opens a right-side panel showing the full
+ * STIX JSON payload (the properties field) exactly as stored in the database.
+ *
+ * The second useEffect syncs typeFilter when the defaultType prop changes.
+ * This is needed because the component stays mounted (CSS visibility) — if it
+ * unmounted on tab switch, the prop change on remount would handle it for free.
+ */
 export default function StixBrowser({ defaultType = '' }: Props) {
   const [objects, setObjects] = useState<StixObject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,10 +62,12 @@ export default function StixBrowser({ defaultType = '' }: Props) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<StixObject | null>(null);
 
+  // Sync internal filter when parent navigates to a specific type
   useEffect(() => {
     setTypeFilter(defaultType);
   }, [defaultType]);
 
+  // Fetch when filter changes; AbortController prevents stale responses
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -104,11 +135,9 @@ export default function StixBrowser({ defaultType = '' }: Props) {
       </Box>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress sx={{ color: COLORS.accentSecondary }} />
-        </Box>
+        <LoadingSpinner />
       ) : error ? (
-        <Typography color="error" sx={{ fontFamily: 'monospace' }}>Failed to load: {error}</Typography>
+        <ErrorDisplay message={error} />
       ) : (
         <>
           <Typography variant="caption" sx={{ color: COLORS.textMuted, mb: 1, display: 'block', fontFamily: 'monospace' }}>
