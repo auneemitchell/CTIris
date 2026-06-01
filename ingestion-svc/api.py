@@ -4,9 +4,6 @@ Exposes endpoints for managing TAXII feeds and triggering manual syncs.
 The APScheduler background scheduler is started as part of the FastAPI
 lifespan so scheduled syncs continue to run inside the same process as
 uvicorn.
-
-scheduler.py remains available as a standalone entry point for development
-use without the HTTP layer.
 """
 
 import json
@@ -34,7 +31,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Keep in sync with scheduler.py — both drive the same sync interval.
 SYNC_INTERVAL_HOURS = 1
 
 

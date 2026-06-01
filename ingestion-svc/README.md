@@ -18,7 +18,7 @@ objects into the shared PostgreSQL database. Currently seeded with one feed
 
 | File | Purpose |
 |------|---------|
-| `scheduler.py` | Entry point — runs an immediate sync on startup, then schedules hourly repeats via APScheduler |
+| `api.py` | Primary entry point — FastAPI app with feed management endpoints and built-in APScheduler for hourly syncs |
 | `sync.py` | Orchestration — queries enabled feeds, runs `sync_one_feed` concurrently via `ThreadPoolExecutor` |
 | `taxii_client.py` | TAXII 2.1 client — generic, works with any TAXII server via `server_url` / `collection_title` parameters |
 | `db.py` | Database helpers — mirrors Alembic schema for INSERT/UPDATE statements; owns no migrations |
@@ -69,18 +69,16 @@ docker compose exec postgres psql -U postgres -d ctiris \
 
 ## TO DO
 
-When the API and frontend are ready, users will add TAXII feeds through the UI.
-We'll need to remove the MITRE default constants and instead pull the feed list from the DB.
-The scheduler SYNC_INTERVAL_HOURS instead will need to updated to short time like 1 minute to check what rows are due using the feeds table:
+When the frontend is ready, users will add TAXII feeds through the UI.
+We'll also need to remove the MITRE default constants and instead pull the feed list purely from the DB.
+The scheduler `SYNC_INTERVAL_HOURS` will need to be updated to a short tick (e.g. 1 minute) that checks which feeds are actually due using the feeds table:
   ```sql
   SELECT * FROM feeds
   WHERE enabled = true
     AND (last_polled_at IS NULL
          OR last_polled_at + (poll_frequency_min * interval '1 minute') <= NOW());
   ```
-  This will makes each feed's `poll_frequency_min` the schedule, configurable
+  This makes each feed's `poll_frequency_min` the authoritative schedule, configurable
   per feed from the UI.
 
 The service now imports the shared SQLAlchemy ORM models from `db-svc`, so there is one source of truth for the table definitions. That removes the need to maintain a separate manual mirror inside `db.py`.
-
-Once the API allows adding credentials for feeds (if required), we'll need the auth_credentials column in the feeds table to encrypt at the application level (i.e. using .env encryption key), since the TAXII client will need to pass the username and password/auth object to Server().
