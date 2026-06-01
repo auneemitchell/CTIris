@@ -46,8 +46,11 @@ SAMPLE_OBJECTS = [
 ]
 
 
-def _make_feed(last_polled_at=None, name="MITRE ATT&CK Enterprise", url=FEED_URL):
-    return {"id": FEED_ID, "name": name, "url": url, "last_polled_at": last_polled_at}
+FERNET_KEY = "tveKrs6wQb5BqXW7FMdgvYJu546OIL6GfHY8nlCzl94="
+
+
+def _make_feed(last_polled_at=None, name="MITRE ATT&CK Enterprise", url=FEED_URL, auth_credentials=None):
+    return {"id": FEED_ID, "name": name, "url": url, "last_polled_at": last_polled_at, "auth_credentials": auth_credentials}
 
 
 def _make_engine():
@@ -64,7 +67,7 @@ def _make_engine():
 # ---------------------------------------------------------------------------
 
 class TestSyncOneFeed:
-    def _run(self, feed, fetch_return=None, upsert_return=(2, 0, 0), fetch_raises=None):
+    def _run(self, feed, fetch_return=None, upsert_return=(2, 0, 0), fetch_raises=None, env=None):
         """Helper: run _sync_one_feed with all dependencies mocked."""
         engine, conn = _make_engine()
         fetch_mock = MagicMock(
@@ -74,6 +77,10 @@ class TestSyncOneFeed:
         upsert_mock = MagicMock(return_value=upsert_return)
         update_mock = MagicMock()
         log_mock = MagicMock()
+
+        extra_patches = {}
+        if env is not None:
+            extra_patches["sync.os"] = patch("sync.os")
 
         with patch("sync.fetch_stix_objects", fetch_mock), \
              patch("sync.upsert_objects", upsert_mock), \
@@ -166,6 +173,55 @@ class TestSyncOneFeed:
              patch("sync.write_log"):
             # Should log an error but not raise
             _sync_one_feed(engine, feed)
+
+    # ------------------------------------------------------------------
+    # Credential decryption
+    # ------------------------------------------------------------------
+
+    def test_no_credentials_passes_none_to_fetch(self, monkeypatch):
+        """Feeds without auth_credentials call fetch with user=None, password=None."""
+        feed = _make_feed(auth_credentials=None)
+        fetch_mock, *_ = self._run(feed)
+        assert fetch_mock.call_args.kwargs.get("user") is None
+        assert fetch_mock.call_args.kwargs.get("password") is None
+
+    def test_valid_credentials_decrypted_and_passed_to_fetch(self, monkeypatch):
+        """Encrypted credentials are decrypted and forwarded to fetch_stix_objects."""
+        import json
+        from cryptography.fernet import Fernet
+        f = Fernet(FERNET_KEY.encode())
+        encrypted = f.encrypt(json.dumps({"username": "alice", "password": "s3cret"}).encode())
+
+        monkeypatch.setenv("CREDENTIALS_ENCRYPTION_KEY", FERNET_KEY)
+        feed = _make_feed(auth_credentials=encrypted)
+        fetch_mock, *_ = self._run(feed)
+
+        assert fetch_mock.call_args.kwargs.get("user") == "alice"
+        assert fetch_mock.call_args.kwargs.get("password") == "s3cret"
+
+    def test_missing_encryption_key_syncs_without_auth(self, monkeypatch):
+        """If CREDENTIALS_ENCRYPTION_KEY is absent, sync proceeds without credentials."""
+        import json
+        from cryptography.fernet import Fernet
+        f = Fernet(FERNET_KEY.encode())
+        encrypted = f.encrypt(json.dumps({"username": "alice", "password": "s3cret"}).encode())
+
+        monkeypatch.delenv("CREDENTIALS_ENCRYPTION_KEY", raising=False)
+        feed = _make_feed(auth_credentials=encrypted)
+        fetch_mock, *_ = self._run(feed)
+
+        # Should still run — just without credentials (logged as warning)
+        assert fetch_mock.call_args.kwargs.get("user") is None
+        assert fetch_mock.call_args.kwargs.get("password") is None
+
+    def test_corrupted_credentials_syncs_without_auth(self, monkeypatch):
+        """Corrupted encrypted bytes are handled gracefully — sync still runs."""
+        monkeypatch.setenv("CREDENTIALS_ENCRYPTION_KEY", FERNET_KEY)
+        feed = _make_feed(auth_credentials=b"not-valid-fernet-data")
+        fetch_mock, *_ = self._run(feed)
+
+        assert fetch_mock.call_args.kwargs.get("user") is None
+        assert fetch_mock.call_args.kwargs.get("password") is None
 
 
 # ---------------------------------------------------------------------------

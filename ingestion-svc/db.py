@@ -119,9 +119,93 @@ def get_enabled_feeds(conn: sa.Connection) -> list[dict]:
             feeds_table.c.name,
             feeds_table.c.url,
             feeds_table.c.last_polled_at,
+            feeds_table.c.auth_credentials,
         ).where(feeds_table.c.enabled == sa.true())
     ).mappings().fetchall()
     return [dict(row) for row in rows]
+
+
+def get_feed_by_id(conn: sa.Connection, feed_id: uuid.UUID) -> dict | None:
+    """Return a single feed row by its UUID, or ``None`` if not found.
+
+    Includes ``auth_credentials`` so the sync runner can decrypt credentials
+    for feeds that require Basic Auth.
+
+    Args:
+        conn: An open SQLAlchemy connection (inside a transaction).
+        feed_id: UUID of the feed to look up.
+
+    Returns:
+        Feed dict or ``None``.
+    """
+    row = conn.execute(
+        sa.select(
+            feeds_table.c.id,
+            feeds_table.c.name,
+            feeds_table.c.url,
+            feeds_table.c.enabled,
+            feeds_table.c.poll_frequency_min,
+            feeds_table.c.last_polled_at,
+            feeds_table.c.auth_credentials,
+            feeds_table.c.status,
+            feeds_table.c.created_at,
+        ).where(feeds_table.c.id == feed_id)
+    ).mappings().fetchone()
+    return dict(row) if row is not None else None
+
+
+def insert_feed(
+    conn: sa.Connection,
+    *,
+    name: str,
+    url: str,
+    poll_frequency_min: int,
+    enabled: bool = True,
+    auth_credentials: bytes | None = None,
+) -> dict | None:
+    """Insert a new feed row and return it, or ``None`` on a URL conflict.
+
+    Uses ``INSERT … ON CONFLICT DO NOTHING`` on the ``url`` unique index so
+    duplicate submissions are handled cleanly without raising an exception.
+    When the URL already exists the function returns ``None`` and the caller
+    is responsible for returning an appropriate HTTP error (409).
+
+    Args:
+        conn: An open SQLAlchemy connection (inside a transaction).
+        name: Human-readable feed name.
+        url: TAXII 2.1 discovery URL (must be unique).
+        poll_frequency_min: How often to poll this feed, in minutes.
+        enabled: Whether the feed is active on creation.
+        auth_credentials: Optional Fernet-encrypted JSON bytes containing
+            ``{"username": ..., "password": ...}`` for Basic Auth feeds.
+
+    Returns:
+        Inserted feed dict (all columns), or ``None`` if the URL already exists.
+    """
+    stmt = (
+        pg_insert(feeds_table)
+        .values(
+            name=name,
+            url=url,
+            poll_frequency_min=poll_frequency_min,
+            enabled=enabled,
+            auth_credentials=auth_credentials,
+            status="active",
+        )
+        .on_conflict_do_nothing(index_elements=["url"])
+        .returning(
+            feeds_table.c.id,
+            feeds_table.c.name,
+            feeds_table.c.url,
+            feeds_table.c.enabled,
+            feeds_table.c.poll_frequency_min,
+            feeds_table.c.last_polled_at,
+            feeds_table.c.status,
+            feeds_table.c.created_at,
+        )
+    )
+    row = conn.execute(stmt).mappings().fetchone()
+    return dict(row) if row is not None else None
 
 
 def _build_rows(objects: list[dict], feed_id: uuid.UUID) -> list[dict]:

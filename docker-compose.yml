@@ -30,6 +30,10 @@ services:
       dockerfile: ingestion-svc/Dockerfile
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ctiris
+      ALLOWED_ORIGIN: http://localhost
+      CREDENTIALS_ENCRYPTION_KEY: tveKrs6wQb5BqXW7FMdgvYJu546OIL6GfHY8nlCzl94=
+    ports:
+      - "8001:8001"
     depends_on:
       db-svc:
         condition: service_completed_successfully
@@ -49,6 +53,7 @@ services:
       - "80:80"
     depends_on:
       - query-svc
+      - ingestion-svc
 
   frontend:
     build: ./frontend

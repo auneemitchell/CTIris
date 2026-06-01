@@ -12,11 +12,14 @@ will appear in the ``feeds`` table and be picked up here automatically with
 no code changes required — ``ensure_mitre_feed`` can be removed at that point.
 """
 
+import json
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 import sqlalchemy as sa
+from cryptography.fernet import Fernet, InvalidToken
 
 from db import (
     ensure_mitre_feed,
@@ -72,10 +75,34 @@ def _sync_one_feed(engine: sa.Engine, feed: dict) -> None:
         feed["last_polled_at"],
     )
 
+    user: str | None = None
+    password: str | None = None
+    if feed.get("auth_credentials"):
+        enc_key = os.environ.get("CREDENTIALS_ENCRYPTION_KEY")
+        if enc_key:
+            try:
+                f = Fernet(enc_key.encode())
+                creds = json.loads(f.decrypt(feed["auth_credentials"]).decode())
+                user = creds.get("username")
+                password = creds.get("password")
+            except (InvalidToken, KeyError, json.JSONDecodeError) as exc:
+                logger.warning(
+                    "Failed to decrypt credentials for feed %s: %s",
+                    feed["name"],
+                    exc,
+                )
+        else:
+            logger.warning(
+                "CREDENTIALS_ENCRYPTION_KEY not set — syncing feed %s without auth",
+                feed["name"],
+            )
+
     try:
         raw_objects = fetch_stix_objects(
             server_url=feed["url"],
             added_after=feed["last_polled_at"],
+            user=user,
+            password=password,
         )
         items_received = len(raw_objects)
         logger.info("Fetched %d STIX objects from %s", items_received, feed["name"])
