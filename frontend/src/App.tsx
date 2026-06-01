@@ -1,11 +1,11 @@
-import { AppBar, Box, Container, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { COLORS } from './constants/themeColors';
 import DashboardHeader from './components/DashboardHeader';
 import DashboardBody from './components/DashboardBody';
 
 function App() {
   return (
-    <Container>
+    <Box>
       {/* HEADER */}
       <DashboardHeader />
 
@@ -16,7 +16,7 @@ function App() {
       <Box sx={{ mt: 4, p: 4 }}>
         <Typography variant='subtitle1' sx={{ color: COLORS.textOutline}} align='center'>Footer will go here!</Typography>
       </Box>
-    </Container>
+    </Box>
   )
 }
 
