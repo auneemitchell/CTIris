@@ -18,6 +18,8 @@ from db import (
     ensure_mitre_feed,
     get_enabled_feeds,
     get_engine,
+    get_feed_by_id,
+    insert_feed,
     update_feed_status,
     upsert_objects,
     write_log,
@@ -197,6 +199,7 @@ class TestGetEnabledFeeds:
             "name": "MITRE ATT&CK Enterprise",
             "url": MITRE_FEED_URL,
             "last_polled_at": last_polled,
+            "auth_credentials": None,
         }
 
         mappings_result = MagicMock()
@@ -235,6 +238,167 @@ class TestGetEnabledFeeds:
         conn.execute.return_value = execute_result
 
         get_enabled_feeds(conn)
+        conn.execute.assert_called_once()
+
+    def test_includes_auth_credentials_column(self):
+        """auth_credentials must be selected so sync can decrypt them."""
+        encrypted = b"fernet-encrypted-bytes"
+        row = {
+            "id": uuid.uuid4(),
+            "name": "Private Feed",
+            "url": "https://private.example.com/taxii2/",
+            "last_polled_at": None,
+            "auth_credentials": encrypted,
+        }
+        mappings_result = MagicMock()
+        mappings_result.fetchall.return_value = [row]
+        execute_result = MagicMock()
+        execute_result.mappings.return_value = mappings_result
+        conn = MagicMock()
+        conn.execute.return_value = execute_result
+
+        feeds = get_enabled_feeds(conn)
+        assert feeds[0]["auth_credentials"] == encrypted
+
+
+# ---------------------------------------------------------------------------
+# get_feed_by_id
+# ---------------------------------------------------------------------------
+
+class TestGetFeedById:
+    def _make_conn(self, row):
+        mappings_result = MagicMock()
+        mappings_result.fetchone.return_value = row
+        execute_result = MagicMock()
+        execute_result.mappings.return_value = mappings_result
+        conn = MagicMock()
+        conn.execute.return_value = execute_result
+        return conn
+
+    def test_returns_dict_when_found(self):
+        feed_id = uuid.uuid4()
+        row = {
+            "id": feed_id,
+            "name": "Test Feed",
+            "url": "https://taxii.example.com/taxii2/",
+            "enabled": True,
+            "poll_frequency_min": 60,
+            "last_polled_at": None,
+            "auth_credentials": None,
+            "status": "active",
+            "created_at": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+        conn = self._make_conn(row)
+        result = get_feed_by_id(conn, feed_id)
+        assert result is not None
+        assert result["id"] == feed_id
+        assert result["name"] == "Test Feed"
+
+    def test_returns_none_when_not_found(self):
+        conn = self._make_conn(None)
+        result = get_feed_by_id(conn, uuid.uuid4())
+        assert result is None
+
+    def test_includes_auth_credentials(self):
+        feed_id = uuid.uuid4()
+        encrypted = b"some-encrypted-bytes"
+        row = {
+            "id": feed_id, "name": "Feed",
+            "url": "https://taxii.example.com/taxii2/",
+            "enabled": True, "poll_frequency_min": 60,
+            "last_polled_at": None, "auth_credentials": encrypted,
+            "status": "active",
+            "created_at": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        }
+        conn = self._make_conn(row)
+        result = get_feed_by_id(conn, feed_id)
+        assert result["auth_credentials"] == encrypted
+
+    def test_executes_one_select(self):
+        conn = self._make_conn(None)
+        get_feed_by_id(conn, uuid.uuid4())
+        conn.execute.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# insert_feed
+# ---------------------------------------------------------------------------
+
+class TestInsertFeed:
+    def _make_conn(self, returned_row):
+        mappings_result = MagicMock()
+        mappings_result.fetchone.return_value = returned_row
+        execute_result = MagicMock()
+        execute_result.mappings.return_value = mappings_result
+        conn = MagicMock()
+        conn.execute.return_value = execute_result
+        return conn
+
+    SAMPLE_ROW = {
+        "id": uuid.uuid4(),
+        "name": "New Feed",
+        "url": "https://new.example.com/taxii2/",
+        "enabled": True,
+        "poll_frequency_min": 60,
+        "last_polled_at": None,
+        "status": "active",
+        "created_at": datetime(2026, 6, 1, tzinfo=timezone.utc),
+    }
+
+    def test_returns_dict_on_success(self):
+        conn = self._make_conn(self.SAMPLE_ROW)
+        result = insert_feed(
+            conn,
+            name="New Feed",
+            url="https://new.example.com/taxii2/",
+            poll_frequency_min=60,
+        )
+        assert result is not None
+        assert result["name"] == "New Feed"
+
+    def test_returns_none_on_url_conflict(self):
+        """ON CONFLICT DO NOTHING returns no row; insert_feed must return None."""
+        conn = self._make_conn(None)
+        result = insert_feed(
+            conn,
+            name="Duplicate",
+            url="https://existing.example.com/taxii2/",
+            poll_frequency_min=60,
+        )
+        assert result is None
+
+    def test_passes_auth_credentials_to_insert(self):
+        """Fernet-encrypted bytes must be forwarded to the INSERT statement."""
+        conn = self._make_conn(self.SAMPLE_ROW)
+        encrypted = b"fernet-blob"
+        insert_feed(
+            conn,
+            name="Private",
+            url="https://private.example.com/taxii2/",
+            poll_frequency_min=30,
+            auth_credentials=encrypted,
+        )
+        conn.execute.assert_called_once()
+
+    def test_auth_credentials_defaults_to_none(self):
+        conn = self._make_conn(self.SAMPLE_ROW)
+        # Should not raise even when auth_credentials is not supplied
+        insert_feed(
+            conn,
+            name="Public",
+            url="https://public.example.com/taxii2/",
+            poll_frequency_min=60,
+        )
+        conn.execute.assert_called_once()
+
+    def test_executes_one_statement(self):
+        conn = self._make_conn(self.SAMPLE_ROW)
+        insert_feed(
+            conn,
+            name="Feed",
+            url="https://feed.example.com/taxii2/",
+            poll_frequency_min=60,
+        )
         conn.execute.assert_called_once()
 
 

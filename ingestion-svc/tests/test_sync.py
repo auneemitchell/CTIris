@@ -8,7 +8,7 @@ Patching targets use the ``sync.*`` namespace because that is where the
 names are bound after ``from db import ...`` and ``from taxii_client import ...``.
 
 Tests are split into two classes:
-- ``TestSyncOneFeed``: unit tests for ``_sync_one_feed``, the per-feed core logic.
+- ``TestSyncOneFeed``: unit tests for ``sync_one_feed``, the per-feed core logic.
 - ``TestRunSync``: integration-level tests for ``run_sync``, the outer loop.
 """
 
@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from sync import _sync_one_feed, run_sync
+from sync import sync_one_feed, run_sync
 
 FEED_ID = uuid.uuid4()
 LAST_POLLED_AT = datetime(2024, 1, 1, tzinfo=timezone.utc)
@@ -46,8 +46,11 @@ SAMPLE_OBJECTS = [
 ]
 
 
-def _make_feed(last_polled_at=None, name="MITRE ATT&CK Enterprise", url=FEED_URL):
-    return {"id": FEED_ID, "name": name, "url": url, "last_polled_at": last_polled_at}
+FERNET_KEY = "tveKrs6wQb5BqXW7FMdgvYJu546OIL6GfHY8nlCzl94="
+
+
+def _make_feed(last_polled_at=None, name="MITRE ATT&CK Enterprise", url=FEED_URL, auth_credentials=None):
+    return {"id": FEED_ID, "name": name, "url": url, "last_polled_at": last_polled_at, "auth_credentials": auth_credentials}
 
 
 def _make_engine():
@@ -60,12 +63,12 @@ def _make_engine():
 
 
 # ---------------------------------------------------------------------------
-# _sync_one_feed
+# sync_one_feed
 # ---------------------------------------------------------------------------
 
 class TestSyncOneFeed:
-    def _run(self, feed, fetch_return=None, upsert_return=(2, 0, 0), fetch_raises=None):
-        """Helper: run _sync_one_feed with all dependencies mocked."""
+    def _run(self, feed, fetch_return=None, upsert_return=(2, 0, 0), fetch_raises=None, env=None):
+        """Helper: run sync_one_feed with all dependencies mocked."""
         engine, conn = _make_engine()
         fetch_mock = MagicMock(
             side_effect=fetch_raises,
@@ -75,11 +78,15 @@ class TestSyncOneFeed:
         update_mock = MagicMock()
         log_mock = MagicMock()
 
+        extra_patches = {}
+        if env is not None:
+            extra_patches["sync.os"] = patch("sync.os")
+
         with patch("sync.fetch_stix_objects", fetch_mock), \
              patch("sync.upsert_objects", upsert_mock), \
              patch("sync.update_feed_status", update_mock), \
              patch("sync.write_log", log_mock):
-            _sync_one_feed(engine, feed)
+            sync_one_feed(engine, feed)
 
         return fetch_mock, upsert_mock, update_mock, log_mock
 
@@ -151,7 +158,7 @@ class TestSyncOneFeed:
         upsert_mock.assert_not_called()
 
     def test_persist_failure_does_not_raise(self):
-        """If writing the checkpoint fails, _sync_one_feed must not propagate."""
+        """If writing the checkpoint fails, sync_one_feed must not propagate."""
         feed = _make_feed()
         engine, _ = _make_engine()
         # Make both engine.begin() calls raise to simulate DB unavailable for persist
@@ -165,7 +172,56 @@ class TestSyncOneFeed:
              patch("sync.update_feed_status"), \
              patch("sync.write_log"):
             # Should log an error but not raise
-            _sync_one_feed(engine, feed)
+            sync_one_feed(engine, feed)
+
+    # ------------------------------------------------------------------
+    # Credential decryption
+    # ------------------------------------------------------------------
+
+    def test_no_credentials_passes_none_to_fetch(self, monkeypatch):
+        """Feeds without auth_credentials call fetch with user=None, password=None."""
+        feed = _make_feed(auth_credentials=None)
+        fetch_mock, *_ = self._run(feed)
+        assert fetch_mock.call_args.kwargs.get("user") is None
+        assert fetch_mock.call_args.kwargs.get("password") is None
+
+    def test_valid_credentials_decrypted_and_passed_to_fetch(self, monkeypatch):
+        """Encrypted credentials are decrypted and forwarded to fetch_stix_objects."""
+        import json
+        from cryptography.fernet import Fernet
+        f = Fernet(FERNET_KEY.encode())
+        encrypted = f.encrypt(json.dumps({"username": "alice", "password": "s3cret"}).encode())
+
+        monkeypatch.setenv("CREDENTIALS_ENCRYPTION_KEY", FERNET_KEY)
+        feed = _make_feed(auth_credentials=encrypted)
+        fetch_mock, *_ = self._run(feed)
+
+        assert fetch_mock.call_args.kwargs.get("user") == "alice"
+        assert fetch_mock.call_args.kwargs.get("password") == "s3cret"
+
+    def test_missing_encryption_key_syncs_without_auth(self, monkeypatch):
+        """If CREDENTIALS_ENCRYPTION_KEY is absent, sync proceeds without credentials."""
+        import json
+        from cryptography.fernet import Fernet
+        f = Fernet(FERNET_KEY.encode())
+        encrypted = f.encrypt(json.dumps({"username": "alice", "password": "s3cret"}).encode())
+
+        monkeypatch.delenv("CREDENTIALS_ENCRYPTION_KEY", raising=False)
+        feed = _make_feed(auth_credentials=encrypted)
+        fetch_mock, *_ = self._run(feed)
+
+        # Should still run — just without credentials (logged as warning)
+        assert fetch_mock.call_args.kwargs.get("user") is None
+        assert fetch_mock.call_args.kwargs.get("password") is None
+
+    def test_corrupted_credentials_syncs_without_auth(self, monkeypatch):
+        """Corrupted encrypted bytes are handled gracefully — sync still runs."""
+        monkeypatch.setenv("CREDENTIALS_ENCRYPTION_KEY", FERNET_KEY)
+        feed = _make_feed(auth_credentials=b"not-valid-fernet-data")
+        fetch_mock, *_ = self._run(feed)
+
+        assert fetch_mock.call_args.kwargs.get("user") is None
+        assert fetch_mock.call_args.kwargs.get("password") is None
 
 
 # ---------------------------------------------------------------------------
@@ -186,34 +242,34 @@ class TestRunSync:
 
         with patch("sync.get_engine", return_value=engine), \
              patch("sync.ensure_mitre_feed") as ensure_mock, \
-             patch("sync.get_enabled_feeds", return_value=[]), \
-             patch("sync._sync_one_feed"):
+             patch("sync.get_due_feeds", return_value=[]), \
+             patch("sync.sync_one_feed"):
             run_sync()
 
         ensure_mock.assert_called_once()
 
-    def test_calls_get_enabled_feeds(self):
+    def test_calls_get_due_feeds(self):
         """run_sync must query the feeds table to discover what to sync."""
         engine, _ = self._make_engine_mock()
 
         with patch("sync.get_engine", return_value=engine), \
              patch("sync.ensure_mitre_feed"), \
-             patch("sync.get_enabled_feeds", return_value=[]) as feeds_mock, \
-             patch("sync._sync_one_feed"):
+             patch("sync.get_due_feeds", return_value=[]) as feeds_mock, \
+             patch("sync.sync_one_feed"):
             run_sync()
 
         feeds_mock.assert_called_once()
 
     def test_syncs_each_enabled_feed(self):
-        """_sync_one_feed is called once per feed returned by get_enabled_feeds."""
+        """sync_one_feed is called once per feed returned by get_enabled_feeds."""
         engine, _ = self._make_engine_mock()
         feed1 = _make_feed(name="Feed A")
         feed2 = _make_feed(name="Feed B")
 
         with patch("sync.get_engine", return_value=engine), \
              patch("sync.ensure_mitre_feed"), \
-             patch("sync.get_enabled_feeds", return_value=[feed1, feed2]), \
-             patch("sync._sync_one_feed") as sync_mock:
+             patch("sync.get_due_feeds", return_value=[feed1, feed2]), \
+             patch("sync.sync_one_feed") as sync_mock:
             run_sync()
 
         assert sync_mock.call_count == 2
@@ -222,13 +278,13 @@ class TestRunSync:
         assert feed2 in synced_feeds
 
     def test_no_sync_when_no_enabled_feeds(self):
-        """When no feeds are enabled, _sync_one_feed should not be called."""
+        """When no feeds are enabled, sync_one_feed should not be called."""
         engine, _ = self._make_engine_mock()
 
         with patch("sync.get_engine", return_value=engine), \
              patch("sync.ensure_mitre_feed"), \
-             patch("sync.get_enabled_feeds", return_value=[]), \
-             patch("sync._sync_one_feed") as sync_mock:
+             patch("sync.get_due_feeds", return_value=[]), \
+             patch("sync.sync_one_feed") as sync_mock:
             run_sync()
 
         sync_mock.assert_not_called()
@@ -241,13 +297,13 @@ class TestRunSync:
         )
 
         with patch("sync.get_engine", return_value=engine), \
-             patch("sync._sync_one_feed") as sync_mock:
+             patch("sync.sync_one_feed") as sync_mock:
             run_sync()  # must not raise
 
         sync_mock.assert_not_called()
 
     def test_one_feed_failure_does_not_prevent_others(self):
-        """Both feeds run even if _sync_one_feed raises for one.
+        """Both feeds run even if sync_one_feed raises for one.
 
         ThreadPoolExecutor submits all feeds before checking results, so an
         exception on one thread does not prevent the others from executing.
@@ -267,8 +323,8 @@ class TestRunSync:
 
         with patch("sync.get_engine", return_value=engine), \
              patch("sync.ensure_mitre_feed"), \
-             patch("sync.get_enabled_feeds", return_value=[feed1, feed2]), \
-             patch("sync._sync_one_feed", side_effect=maybe_raise):
+             patch("sync.get_due_feeds", return_value=[feed1, feed2]), \
+             patch("sync.sync_one_feed", side_effect=maybe_raise):
             run_sync()  # must not raise — exception is caught in the futures loop
 
         # Both feeds were submitted and executed despite feed1 raising

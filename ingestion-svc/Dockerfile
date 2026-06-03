@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir /opt/db-svc && pip install --no-cache-dir -r requ
 
 COPY ingestion-svc/ .
 
-CMD ["python", "scheduler.py"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8001"]
