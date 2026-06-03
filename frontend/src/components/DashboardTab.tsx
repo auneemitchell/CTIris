@@ -117,7 +117,7 @@ export default function DashboardTab({ onTypeClick }: Props) {
             tooltip="Malware families ranked by how many STIX relationships reference them. Each ring represents one malware family — the longer the arc, the more it appears across threat intelligence reports. Useful for spotting which malware is most commonly linked to attacks in your feeds."
             gutterBottom={false}
           />
-          <MostActiveMalware relationships={relationships} />
+          <MostActiveMalware />
         </Grid>
       </Grid>
     </Box>
