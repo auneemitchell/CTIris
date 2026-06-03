@@ -19,7 +19,7 @@ Requests come in via FastAPI, SQLAlchemy builds and runs the query, and results 
 ```
 query-svc/
 ├── main.py                # FastAPI app and all route handlers
-├── db.py                  # Database connection and table definitions
+├── db.py                  # Database connection; imports shared ORM table definitions from ctiris_db
 ├── requirements.txt       # Python dependencies
 ├── requirements-dev.txt   # Dev/test dependencies
 ├── Dockerfile             # Container build instructions
@@ -76,4 +76,3 @@ Note: depending on your system, you may need `python3`/`pip3`, or `pytest` may b
 ## TO DO
 
 - Add `ALLOWED_ORIGIN=http://api-gateway:PORT` to `query-svc` environment in `docker-compose.yml` once the API gateway is ready
-- Replace manual table definitions in `db.py` with shared SQLAlchemy ORM models once the backend adds them
