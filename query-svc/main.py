@@ -94,6 +94,71 @@ def list_stix(
     return [_serialize(dict(row)) for row in rows]
 
 
+@app.get("/stix/counts")
+def count_stix(conn=Depends(get_db)):
+    """Return the total number of STIX objects in the database, grouped by type.
+
+    Returns:
+        Dict mapping each STIX type to its count, e.g. {"malware": 729, "relationship": 21025}.
+
+    Example:
+        GET /stix/counts
+    """
+    rows = conn.execute(
+        sa.select(stix_objects_table.c.type, sa.func.count().label("count"))
+        .group_by(stix_objects_table.c.type)
+    ).mappings().fetchall()
+    return {row["type"]: row["count"] for row in rows}
+
+
+@app.get("/stix/top-by-relationships")
+def top_by_relationships(
+    type: list[str] = Query(...),
+    limit: int = Query(8, ge=1, le=50),
+    conn=Depends(get_db),
+):
+    """Return the top STIX entities ranked by relationship count.
+
+    Counts every relationship object that references the entity as source_ref
+    or target_ref. Runs a single SQL self-join across all relationship rows —
+    no client-side cap. Accepts one or more types so callers can rank across
+    multiple entity types in a single globally-correct query.
+
+    Args:
+        type: STIX type(s) to rank. Repeat the param for multiple types, e.g.
+              ?type=threat-actor&type=intrusion-set
+        limit: Number of top entries to return. Default 8, max 50.
+
+    Returns:
+        List of {stix_id, type, name, relationship_count} dicts, descending order.
+
+    Example:
+        GET /stix/top-by-relationships?type=malware&limit=10
+        GET /stix/top-by-relationships?type=threat-actor&type=intrusion-set&limit=10
+    """
+    stmt = sa.text("""
+        SELECT
+            entity.stix_id,
+            entity.type,
+            entity.properties->>'name' AS name,
+            COUNT(rel.stix_id)         AS relationship_count
+        FROM stix_objects entity
+        JOIN stix_objects rel ON (
+            rel.type = 'relationship'
+            AND (
+                rel.properties->>'source_ref' = entity.stix_id
+                OR rel.properties->>'target_ref' = entity.stix_id
+            )
+        )
+        WHERE entity.type = ANY(:types)
+        GROUP BY entity.stix_id, entity.type, entity.properties->>'name'
+        ORDER BY relationship_count DESC
+        LIMIT :limit
+    """)
+    rows = conn.execute(stmt, {"types": type, "limit": limit}).mappings().fetchall()
+    return [dict(row) for row in rows]
+
+
 @app.get("/stix/{stix_id}")
 def get_stix(stix_id: str, conn=Depends(get_db)):
     """Return a single STIX object by its ID.

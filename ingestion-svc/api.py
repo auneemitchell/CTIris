@@ -110,7 +110,7 @@ def _encrypt_credentials(creds: CredentialsIn) -> bytes:
     try:
         f = Fernet(key.encode())
     except ValueError:
-        raise HTTPException(status_code=500, details="CREDENTIALS_ENCRYPTION_KEY is invalid")  
+        raise HTTPException(status_code=500, detail="CREDENTIALS_ENCRYPTION_KEY is invalid")  
     payload = json.dumps({"username": creds.username, "password": creds.password})
     return f.encrypt(payload.encode())
 

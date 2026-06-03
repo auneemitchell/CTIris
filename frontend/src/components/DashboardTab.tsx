@@ -20,25 +20,13 @@ interface Props {
  *
  */
 export default function DashboardTab({ onTypeClick }: Props) {
-  const [counts, setCounts] = useState<Record<string, number | string>>({});
-  const [relationships, setRelationships] = useState<import('../api/client').StixObject[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      Promise.all(
-        STIX_TYPES.map(t =>
-          // '1000+' signals the count hit the API cap and may be higher
-          api.stix(t.key, 1000).then(objs => [t.key, objs.length === 1000 ? '1000+' : objs.length] as const)
-        )
-      ),
-      api.stix('relationship', 1000),
-    ])
-      .then(([entries, rels]) => {
-        setCounts(Object.fromEntries(entries));
-        setRelationships(rels);
-      })
+    api.stixCounts()
+      .then(setCounts)
       .catch(e => setError(String(e)))
       .finally(() => setLoading(false));
   }, []);
@@ -46,15 +34,12 @@ export default function DashboardTab({ onTypeClick }: Props) {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorDisplay message={error} />;
 
-  // If any type hit the 1000 cap, treat it as 1000 in the sum and append '+'
-  const countValues = Object.values(counts);
-  const total = countValues.reduce<number>((a, b) => a + (typeof b === 'number' ? b : 1000), 0);
-  const totalLabel = countValues.some(v => v === '1000+') ? `${total}+` : String(total);
+  const total = Object.values(counts).reduce((a, b) => a + b, 0).toLocaleString();
 
   return (
     <Box>
       <Typography variant="body2" sx={{ color: COLORS.textMuted, mb: 3, fontFamily: 'monospace' }}>
-        {totalLabel} objects across {STIX_TYPES.length} key types
+        {total} objects across {STIX_TYPES.length} key types
       </Typography>
 
       {/* ── STAT CARDS ────────────────────────────────────────────────────────
@@ -92,7 +77,7 @@ export default function DashboardTab({ onTypeClick }: Props) {
               </Box>
               <CardContent>
                 <Typography variant="h4" sx={{ color: COLORS.textPrimary, fontWeight: 'bold', fontFamily: 'monospace' }}>
-                  {counts[t.key]}
+                  {counts[t.key] ?? 0}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)', fontFamily: 'monospace', letterSpacing: 0.5, mt: 0.5 }}>
                   {t.label}
@@ -103,10 +88,7 @@ export default function DashboardTab({ onTypeClick }: Props) {
         ))}
       </Grid>
 
-      {/* ── WIDGETS ───────────────────────────────────────────────────────────
-          Relationship data fetched above is passed as a prop to both widgets
-          so they share one fetch rather than each making a duplicate request.
-      ──────────────────────────────────────────────────────────────────── */}
+      {/* ── WIDGETS ─────────────────────────────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mt: 2 }}>
         {/* Most Active Threats — ranked list of threat-actors and intrusion-sets */}
         <Grid item xs={12} md={6}>
@@ -115,17 +97,17 @@ export default function DashboardTab({ onTypeClick }: Props) {
             tooltip="Threat actors and intrusion sets ranked by how many STIX relationship objects reference them. A relationship connects two STIX objects — for example, 'Lazarus Group uses Cobalt Strike' or 'APT29 targets Finance'. The more relationships an entity appears in, the more documented activity it has."
             gutterBottom={false}
           />
-          <MostActiveThreats relationships={relationships} />
+          <MostActiveThreats />
         </Grid>
 
-        {/* Most Active Malware — radial bar chart of malware by relationship count */}
+        {/* Most Active Malware — ranked list of malware by relationship count */}
         <Grid item xs={12} md={6}>
           <SectionHeader
             title="MOST ACTIVE MALWARE"
-            tooltip="Malware families ranked by how many STIX relationships reference them. Each ring represents one malware family — the longer the arc, the more it appears across threat intelligence reports. Useful for spotting which malware is most commonly linked to attacks in your feeds."
+            tooltip="Malware families ranked by how many STIX relationships reference them. The longer the bar, the more it appears across threat intelligence reports. Useful for spotting which malware is most commonly linked to attacks in your feeds."
             gutterBottom={false}
           />
-          <MostActiveMalware relationships={relationships} />
+          <MostActiveMalware />
         </Grid>
       </Grid>
     </Box>
