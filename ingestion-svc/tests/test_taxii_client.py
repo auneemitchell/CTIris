@@ -164,6 +164,32 @@ class TestFetchStixObjects:
         server.api_roots[0].collections[0].get_objects.assert_called_once_with()
 
     @patch("taxii_client.Server")
+    def test_passes_user_and_password_to_connection(self, MockServer):
+        """user and password must be forwarded to _HTTPConnection via _make_conn."""
+        server = _make_server("Enterprise ATT&CK")
+        MockServer.return_value = server
+        server.api_roots[0].collections[0].get_objects.return_value = {}
+
+        with patch("taxii_client._make_conn") as mock_make_conn:
+            mock_make_conn.return_value = MagicMock()
+            fetch_stix_objects(user="alice", password="s3cret")
+
+        mock_make_conn.assert_called_once_with(user="alice", password="s3cret")
+
+    @patch("taxii_client.Server")
+    def test_defaults_user_and_password_to_none(self, MockServer):
+        """Omitting user/password must default to None (anonymous access)."""
+        server = _make_server("Enterprise ATT&CK")
+        MockServer.return_value = server
+        server.api_roots[0].collections[0].get_objects.return_value = {}
+
+        with patch("taxii_client._make_conn") as mock_make_conn:
+            mock_make_conn.return_value = MagicMock()
+            fetch_stix_objects()
+
+        mock_make_conn.assert_called_once_with(user=None, password=None)
+
+    @patch("taxii_client.Server")
     def test_incremental_sync_passes_added_after(self, MockServer):
         server = _make_server("Enterprise ATT&CK")  # title matches MITRE_COLLECTION_TITLE hint
         MockServer.return_value = server

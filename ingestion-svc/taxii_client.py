@@ -28,7 +28,7 @@ MITRE_COLLECTION_TITLE = "enterprise"  # matched case-insensitively
 TAXII_TIMEOUT = 30
 
 
-def _make_conn() -> _HTTPConnection:
+def _make_conn(user: str | None = None, password: str | None = None) -> _HTTPConnection:
     """Return a TAXII connection with TAXII_TIMEOUT pre-applied.
 
     Constructs ``_HTTPConnection`` and patches its session *before* the conn
@@ -38,7 +38,7 @@ def _make_conn() -> _HTTPConnection:
     Wrapped in a try/except so that if taxii2client's internals ever change,
     the service degrades (no timeout) rather than crashing.
     """
-    conn = _HTTPConnection(user=None, password=None, verify=True, proxies=None, version="2.1")
+    conn = _HTTPConnection(user=user, password=password, verify=True, proxies=None, version="2.1")
     try:
         _orig_send = conn.session.send
 
@@ -129,6 +129,8 @@ def fetch_stix_objects(
     server_url: str = MITRE_DISCOVERY_URL,
     collection_title: str = MITRE_COLLECTION_TITLE,
     added_after: datetime | None = None,
+    user: str | None = None,
+    password: str | None = None,
 ) -> list[dict]:
     """Fetch all STIX objects from the given TAXII collection.
 
@@ -154,7 +156,7 @@ def fetch_stix_objects(
         List of raw STIX 2.1 object dicts exactly as returned by the server.
     """
     logger.info("Connecting to TAXII server: %s", server_url)
-    server = Server(server_url, conn=_make_conn())
+    server = Server(server_url, conn=_make_conn(user=user, password=password))
     collection = _find_collection(server, title_hint=collection_title)
 
     kwargs: dict = {}
