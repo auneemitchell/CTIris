@@ -42,6 +42,9 @@ jobs:
           cache: pip
           cache-dependency-path: query-svc/requirements-dev.txt
 
+      - name: Install shared db package
+        run: pip install --no-cache-dir db-svc/
+
       - name: Install dependencies
         run: pip install -r query-svc/requirements-dev.txt
 
@@ -90,7 +93,8 @@ jobs:
         run: docker build -f ingestion-svc/Dockerfile -t ctiris-ingestion-svc .
 
       - name: Build query-svc
-        run: docker build -t ctiris-query-svc query-svc/
+        # Build context must be repo root — Dockerfile copies db-svc/ as a shared package
+        run: docker build -f query-svc/Dockerfile -t ctiris-query-svc .
 
       - name: Build frontend
         run: docker build -t ctiris-frontend frontend/
