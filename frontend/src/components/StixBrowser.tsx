@@ -68,11 +68,14 @@ export default function StixBrowser({ defaultType = '' }: Props) {
   }, [defaultType]);
 
   // Fetch when filter changes; AbortController prevents stale responses
+  // Currently limiting number fetches to 200 objects (PAGE_LIMIT)
+  // TODO: Set up pagination
   useEffect(() => {
     const controller = new AbortController();
+    const PAGE_LIMIT = 200;
     setLoading(true);
     setError(null);
-    api.stix(typeFilter || undefined, 200, 0, controller.signal)
+    api.stix(typeFilter || undefined, PAGE_LIMIT, 0, controller.signal)
       .then(data => {
         if (!controller.signal.aborted) setObjects(data);
       })
