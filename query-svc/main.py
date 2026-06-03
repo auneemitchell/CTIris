@@ -111,6 +111,50 @@ def count_stix(conn=Depends(get_db)):
     return {row["type"]: row["count"] for row in rows}
 
 
+@app.get("/stix/top-by-relationships")
+def top_by_relationships(
+    type: str = Query(...),
+    limit: int = Query(8, ge=1, le=50),
+    conn=Depends(get_db),
+):
+    """Return the top STIX entities of a given type, ranked by relationship count.
+
+    Counts every relationship object that references the entity as source_ref
+    or target_ref. Runs a single SQL self-join across all relationship rows —
+    no client-side cap.
+
+    Args:
+        type: STIX type to rank (e.g. "malware", "threat-actor").
+        limit: Number of top entries to return. Default 8, max 50.
+
+    Returns:
+        List of {stix_id, name, relationship_count} dicts, descending order.
+
+    Example:
+        GET /stix/top-by-relationships?type=malware&limit=8
+    """
+    stmt = sa.text("""
+        SELECT
+            entity.stix_id,
+            entity.properties->>'name' AS name,
+            COUNT(rel.stix_id)         AS relationship_count
+        FROM stix_objects entity
+        JOIN stix_objects rel ON (
+            rel.type = 'relationship'
+            AND (
+                rel.properties->>'source_ref' = entity.stix_id
+                OR rel.properties->>'target_ref' = entity.stix_id
+            )
+        )
+        WHERE entity.type = :type
+        GROUP BY entity.stix_id, entity.properties->>'name'
+        ORDER BY relationship_count DESC
+        LIMIT :limit
+    """)
+    rows = conn.execute(stmt, {"type": type, "limit": limit}).mappings().fetchall()
+    return [dict(row) for row in rows]
+
+
 @app.get("/stix/{stix_id}")
 def get_stix(stix_id: str, conn=Depends(get_db)):
     """Return a single STIX object by its ID.
