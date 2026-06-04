@@ -14,14 +14,13 @@ import Heatmap from './HeatMap';
 interface Props {
   /** Called when a stat card is clicked. Switches to the STIX browser filtered to that type. */
   onTypeClick: (type: string) => void;
-  onSearchClick?: (query: string, type: string) => void;
 }
 
 /**
  * Dashboard tab — stat cards and activity widgets.
  *
  */
-export default function DashboardTab({ onTypeClick, onSearchClick }: Props) {
+export default function DashboardTab({ onTypeClick }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +110,7 @@ export default function DashboardTab({ onTypeClick, onSearchClick }: Props) {
             tooltip="Threat actors and intrusion sets ranked by how many STIX relationship objects reference them. A relationship connects two STIX objects — for example, 'Lazarus Group uses Cobalt Strike' or 'APT29 targets Finance'. The more relationships an entity appears in, the more documented activity it has."
             gutterBottom={false}
           />
-          <MostActiveThreats onItemClick={(name) => onSearchClick ? onSearchClick(name, 'threat-actor') : onTypeClick('threat-actor')} />
+          <MostActiveThreats />
         </Grid>
 
         {/* Most Active Malware — ranked list of malware by relationship count */}
@@ -121,7 +120,7 @@ export default function DashboardTab({ onTypeClick, onSearchClick }: Props) {
             tooltip="Malware families ranked by how many STIX relationships reference them. The longer the bar, the more it appears across threat intelligence reports. Useful for spotting which malware is most commonly linked to attacks in your feeds."
             gutterBottom={false}
           />
-          <MostActiveMalware onItemClick={(name) => onSearchClick ? onSearchClick(name, 'malware') : onTypeClick('malware')} />
+          <MostActiveMalware />
         </Grid>
       </Grid>
     </Box>

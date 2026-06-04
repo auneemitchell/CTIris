@@ -34,8 +34,8 @@ export default function DashboardBody() {
         sx={{
           mb: 3,
           '& .MuiTab-root': { color: COLORS.textMuted, fontFamily: 'monospace', letterSpacing: 1.5, fontSize: '0.75rem' },
-          '& .Mui-selected': { color: COLORS.accentSecondary },
-          '& .MuiTabs-indicator': { backgroundColor: COLORS.accentSecondary },
+          '& .Mui-selected': { color: COLORS.textQuaternary },
+          '& .MuiTabs-indicator': { backgroundColor: COLORS.textQuaternary },
         }}
       >
         <Tab label="DASHBOARD" />

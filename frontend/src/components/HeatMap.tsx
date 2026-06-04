@@ -100,7 +100,7 @@ export default function Heatmap() {
                     projectionConfig={{ scale: 120, center: [0, 30] }}
                     style={{ width: "100%", height: "auto" }}
                 >
-                    <Sphere stroke="rgba(255,255,255,0.03)" strokeWidth={0.5} fill="transparent" />
+                    <Sphere id="rsm-sphere" stroke="rgba(255,255,255,0.03)" strokeWidth={0.5} fill="transparent" />
                     <Graticule stroke="rgba(255,255,255,0.03)" strokeWidth={0.5} />
 
                     <Geographies geography={GEO_URL}>

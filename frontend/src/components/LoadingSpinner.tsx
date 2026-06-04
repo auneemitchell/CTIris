@@ -5,7 +5,7 @@ import { COLORS } from '../constants/themeColors';
 export default function LoadingSpinner() {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-      <CircularProgress sx={{ color: COLORS.accentSecondary }} />
+      <CircularProgress sx={{ color: COLORS.textQuaternary }} />
     </Box>
   );
 }

@@ -14,7 +14,7 @@ function App() {
 
       {/* FOOTER */}
       <Box sx={{ mt: 4, p: 4 }}>
-        <Typography variant='subtitle1' sx={{ color: COLORS.textOutline}} align='center'>Footer will go here!</Typography>
+        <Typography variant='subtitle1' sx={{ color: COLORS.textSecondary}} align='center'>Footer will go here!</Typography>
       </Box>
     </Box>
   )
