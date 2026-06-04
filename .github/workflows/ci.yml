@@ -68,12 +68,9 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # TODO: fix frontend lint errors before re-enabling
-      #   - StixBrowser.tsx:67,73 — react-hooks/set-state-in-effect (setState called synchronously in useEffect)
-      #   - StixData.tsx:26 — @typescript-eslint/no-explicit-any
-      # - name: Lint
-      #   working-directory: frontend
-      #   run: npm run lint
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
 
       - name: Type-check & build
         working-directory: frontend

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { COLORS } from '../constants/themeColors';
+import type { StixObject } from '../api/client';
 
 type StixRow = {
     stix_id: string;
@@ -23,11 +24,11 @@ export default function StixData() {
 
             return res.json();
         }).then(data => {
-            const mapped = data.map((obj: any) => ({
+            const mapped = (data as StixObject[]).map((obj) => ({
                 stix_id: obj.stix_id,
                 type: obj.type,
-                name: obj.properties.name ?? '-',
-                description: obj.properties.description ?? '-',
+                name: (obj.properties.name as string | undefined) ?? '-',
+                description: (obj.properties.description as string | undefined) ?? '-',
                 created: obj.stix_created ?? obj.ingested_at,
             }));
             setRows(mapped);

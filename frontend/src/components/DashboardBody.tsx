@@ -47,7 +47,7 @@ export default function DashboardBody() {
         <Box sx={{ display: tab === 0 ? 'block' : 'none' }}>
           <SectionHeader
             title="THREAT INTELLIGENCE SUMMARY"
-            tooltip="Counts of the 10 core STIX Domain Object (SDO) types currently in the database. STIX (Structured Threat Information eXpression) is a standardized language for describing cyber threats — each type captures a different aspect, such as Malware for malicious software, Threat Actor for the groups behind attacks, or Vulnerability for known weaknesses."
+            tooltip="Counts of the core STIX Domain Object (SDO) types currently in the database. STIX (Structured Threat Information eXpression) is a standardized language for describing cyber threats — each type captures a different aspect, such as Malware for malicious software, Threat Actor for the groups behind attacks, or Vulnerability for known weaknesses."
           />
           <DashboardTab onTypeClick={navigateToType} />
         </Box>
