@@ -9,6 +9,7 @@ import HelpBadge from './HelpBadge';
 import SectionHeader from './SectionHeader';
 import MostActiveThreats from './MostActiveThreats';
 import MostActiveMalware from './MostActiveMalware';
+import LocationMap from './LocationMap';
 
 interface Props {
   /** Called when a stat card is clicked. Switches to the STIX browser filtered to that type. */
@@ -108,6 +109,18 @@ export default function DashboardTab({ onTypeClick }: Props) {
             gutterBottom={false}
           />
           <MostActiveMalware />
+        </Grid>
+      </Grid>
+
+      {/* ── LOCATION MAP ─────────────────────────────────────────────────────── */}
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid item xs={12}>
+          <SectionHeader
+            title="LOCATION MAP"
+            tooltip="STIX Location objects plotted on a world map. Filled dots mark objects with exact coordinates; hollow circles mark objects that only carry a country code (placed at the country centroid). Location objects describe geographic context — such as where a threat actor operates or where an attack was observed."
+            gutterBottom={false}
+          />
+          <LocationMap />
         </Grid>
       </Grid>
     </Box>
