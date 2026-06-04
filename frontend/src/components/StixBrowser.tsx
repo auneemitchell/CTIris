@@ -56,16 +56,23 @@ interface Props {
  */
 export default function StixBrowser({ defaultType = '' }: Props) {
   const [objects, setObjects] = useState<StixObject[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchedFor, setFetchedFor] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState(defaultType);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<StixObject | null>(null);
 
-  // Sync internal filter when parent navigates to a specific type
-  useEffect(() => {
+  // Sync typeFilter when the parent navigates to a specific type without unmounting
+  const [prevDefaultType, setPrevDefaultType] = useState(defaultType);
+  if (prevDefaultType !== defaultType) {
+    setPrevDefaultType(defaultType);
     setTypeFilter(defaultType);
-  }, [defaultType]);
+  }
+
+  // loading is true whenever typeFilter has changed but the fetch hasn't settled yet
+  const loading = fetchedFor !== typeFilter;
+  // suppress stale errors from a previous filter while a new fetch is in flight
+  const currentError = fetchedFor === typeFilter ? error : null;
 
   // Fetch when filter changes; AbortController prevents stale responses
   // Currently limiting number fetches to 200 objects (PAGE_LIMIT)
@@ -73,17 +80,19 @@ export default function StixBrowser({ defaultType = '' }: Props) {
   useEffect(() => {
     const controller = new AbortController();
     const PAGE_LIMIT = 200;
-    setLoading(true);
-    setError(null);
     api.stix(typeFilter || undefined, PAGE_LIMIT, 0, controller.signal)
       .then(data => {
-        if (!controller.signal.aborted) setObjects(data);
+        if (!controller.signal.aborted) {
+          setObjects(data);
+          setError(null);
+          setFetchedFor(typeFilter);
+        }
       })
       .catch(e => {
-        if (!controller.signal.aborted) setError(String(e));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setError(String(e));
+          setFetchedFor(typeFilter);
+        }
       });
     return () => controller.abort();
   }, [typeFilter]);
@@ -139,8 +148,8 @@ export default function StixBrowser({ defaultType = '' }: Props) {
 
       {loading ? (
         <LoadingSpinner />
-      ) : error ? (
-        <ErrorDisplay message={error} />
+      ) : currentError ? (
+        <ErrorDisplay message={currentError} />
       ) : (
         <>
           <Typography variant="caption" sx={{ color: COLORS.textMuted, mb: 1, display: 'block', fontFamily: 'monospace' }}>
