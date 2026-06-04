@@ -4,7 +4,7 @@ import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { api } from '../api/client';
 import { COLORS } from '../constants/themeColors';
-import { STIX_TYPES } from '../constants/stixTypes';
+import { DASHBOARD_STIX_TYPES } from '../constants/stixTypes';
 import HelpBadge from './HelpBadge';
 import SectionHeader from './SectionHeader';
 import MostActiveThreats from './MostActiveThreats';
@@ -34,12 +34,16 @@ export default function DashboardTab({ onTypeClick }: Props) {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorDisplay message={error} />;
 
-  const total = Object.values(counts).reduce((a, b) => a + b, 0).toLocaleString();
+  const dashboardKeys = new Set(DASHBOARD_STIX_TYPES.map(t => t.key));
+  const total = Object.entries(counts)
+    .filter(([k]) => dashboardKeys.has(k))
+    .reduce((a, [, v]) => a + v, 0)
+    .toLocaleString();
 
   return (
     <Box>
       <Typography variant="body2" sx={{ color: COLORS.textMuted, mb: 3, fontFamily: 'monospace' }}>
-        {total} objects across {STIX_TYPES.length} key types
+        {total} objects across {DASHBOARD_STIX_TYPES.length} key types
       </Typography>
 
       {/* ── STAT CARDS ────────────────────────────────────────────────────────
@@ -49,7 +53,7 @@ export default function DashboardTab({ onTypeClick }: Props) {
           triggering the card's click handler.
       ──────────────────────────────────────────────────────────────────── */}
       <Grid container spacing={2}>
-        {STIX_TYPES.map(t => (
+        {DASHBOARD_STIX_TYPES.map(t => (
           <Grid item xs={6} sm={4} md={3} key={t.key}>
             <Card
               onClick={() => onTypeClick(t.key)}
