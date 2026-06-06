@@ -10,6 +10,8 @@ import SectionHeader from './SectionHeader';
 import MostActiveThreats from './MostActiveThreats';
 import MostActiveMalware from './MostActiveMalware';
 import Heatmap from './HeatMap';
+import DonutChart from './DonutChart';
+import CampaignList from './CampaignList';
 
 interface Props {
   /** Called when a stat card is clicked. Switches to the STIX browser filtered to that type. */
@@ -95,14 +97,39 @@ export default function DashboardTab({ onTypeClick }: Props) {
         ))}
       </Grid>
 
-      {/* ── HEATMAP ───────────────────────────────────────────────────────────*/}
-      <Box sx={{ mt: 3 }}>
-        <SectionHeader
-          title="GLOBAL THREAT CONCENTRATION HEATMAP"
-          tooltip="Shows a global density of where malicious threat activity is originating based on mapped STIX location objects"
-          gutterBottom={false}
-        />
-        <Heatmap />
+      <Box sx={{ display: 'flex', mt: 3 }}>
+        {/* ── HEATMAP ───────────────────────────────────────────────────────────*/}
+        <Box sx={{ flex: 4, p: 1 }}>
+          <SectionHeader
+            title="GLOBAL THREAT CONCENTRATION MAP"
+            tooltip="Shows the geographic distribution of STIX objects based on mention frequency. Higher concentrations appear in darker red. Select a country to view the number of reference."
+            gutterBottom={false}
+          />
+          <Heatmap />
+        </Box>
+
+        <Box sx = {{ flexDirection: 'row' }}>
+          {/* ── DONUT CHART ─────────────────────────────────────────────────────────── */}
+          <Box sx={{ flex: 1, p: 1 }}>
+            <SectionHeader
+              title="TARGETED INDUSTRY"
+              tooltip="Shows the distribution of industries based on keyword matches within STIX object content."
+              gutterBottom={false}
+            />
+            <DonutChart />
+          </Box>
+
+          {/* ── CAMPAIGN LIST ─────────────────────────────────────────────────────────── */}
+          <Box sx={{ p: 1, mt: 3 }}>
+            <SectionHeader
+              title="CAMPAIGN LIST"
+              tooltip="Shows a list of observed campaigns. Select a campaign to view detailed intelligence."
+              gutterBottom={false}
+            />
+            <CampaignList />
+          </Box>
+        </Box>
+
       </Box>
 
       {/* ── WIDGETS ─────────────────────────────────────────────────────────── */}

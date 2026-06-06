@@ -15,7 +15,7 @@ const rows = [
     attackSampleData('T1003', 'Credential Dumping', 'Steal credentials'),
 ];
 
-export default function AttackTechniques() {
+export default function TableSample() {
     return (
         <TableContainer sx={{ backgroundColor: COLORS.headerBackground, border: '2px solid rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
             <Table sx={{ minWidth: 400, maxHeight: 400, overflow: 'auto', backgroundColor: 'transparent', 

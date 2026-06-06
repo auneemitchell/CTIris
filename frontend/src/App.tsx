@@ -1,7 +1,7 @@
-import { Box, Typography } from '@mui/material';
-import { COLORS } from './constants/themeColors';
+import { Box } from '@mui/material';
 import DashboardHeader from './components/DashboardHeader';
 import DashboardBody from './components/DashboardBody';
+import DashboardFooter from './components/DashboardFooter';
 
 function App() {
   return (
@@ -13,9 +13,7 @@ function App() {
       <DashboardBody />
 
       {/* FOOTER */}
-      <Box sx={{ mt: 4, p: 4 }}>
-        <Typography variant='subtitle1' sx={{ color: COLORS.textSecondary}} align='center'>Footer will go here!</Typography>
-      </Box>
+      <DashboardFooter />
     </Box>
   )
 }

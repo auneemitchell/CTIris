@@ -27,7 +27,7 @@ export default function DashboardBody() {
   }
 
   return (
-    <Box sx={{ bgcolor: COLORS.backgroundContainer, minHeight: '100vh', paddingX: { xs: 2, md: 8 }, paddingY: 2 }}>
+    <Box sx={{ bgcolor: COLORS.backgroundContainer, minHeight: '100vh', paddingX: { xs: 2, md: 8 }, paddingY: 2, pb: 10 }}>
       <Tabs
         value={tab}
         onChange={(_, v: number) => setTab(v)}

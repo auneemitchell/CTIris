@@ -14,10 +14,11 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^5.18.0",
     "@mui/material": "^5.18.0",
+    "@mui/x-charts": "^7.23.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-simple-maps": "^3.0.0",
-    "recharts": "^3.8.1"
+    "react-force-graph-2d": "^1.29.1",
+    "react-simple-maps": "^3.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
