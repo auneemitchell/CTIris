@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Chip,
   Divider,
@@ -17,7 +14,6 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { ExpandMore } from '@mui/icons-material';
 import { api } from '../api/client';
 import type { StixObject, StixRelationships, StixRelationshipRef, StixRelationshipBackRef, StixPropertyRef } from '../api/client';
 import { COLORS } from '../constants/themeColors';
@@ -28,6 +24,16 @@ import StixDescription from './StixDescription';
 interface Props {
   stixId: string;
   onDisplayNameChange?: (displayName: string) => void;
+}
+
+interface RequestData<T> {
+  requestId: string;
+  data: T;
+}
+
+interface RequestError {
+  requestId: string;
+  message: string;
 }
 
 // Properties that are rendered explicitly above the accordion.
@@ -66,16 +72,18 @@ function isStixId(value: string): boolean {
   return STIX_ID_PATTERN.test(value);
 }
 
+function formatPropertyName(value: string): string {
+  return value.replace(/_/g, ' ');
+}
+
 function AdditionalPropertyValue({
   value,
   navigate,
   propertyRefLookup,
-  depth = 0,
 }: {
   value: unknown;
   navigate: (path: string) => void;
   propertyRefLookup: Record<string, StixPropertyRef>;
-  depth?: number;
 }) {
   if (value === null || value === undefined) {
     return <Typography component="span" sx={{ color: COLORS.textMuted }}>—</Typography>;
@@ -92,7 +100,7 @@ function AdditionalPropertyValue({
           type="button"
           title={propertyRef ? value : undefined}
           onClick={() => navigate('/stix/' + encodeURIComponent(value))}
-          sx={{ color: COLORS.textTertiary, fontFamily: 'monospace', fontSize: '0.78rem', wordBreak: 'break-all', textAlign: 'left' }}
+          sx={{ color: COLORS.textTertiary, fontFamily: 'monospace', fontSize: '0.78rem', wordBreak: 'break-word', textAlign: 'left' }}
         >
           {displayValue}
         </Link>
@@ -112,13 +120,14 @@ function AdditionalPropertyValue({
     }
 
     return (
-      <Box component="ul" sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, m: 0, pl: 2.25 }}>
+      <Typography component="span" sx={{ color: COLORS.textPrimary, fontFamily: 'monospace', fontSize: '0.78rem', wordBreak: 'break-word' }}>
         {value.map((item, itemIndex) => (
-          <Box component="li" key={itemIndex} sx={{ color: COLORS.textMuted, pl: 0.25 }}>
-            <AdditionalPropertyValue value={item} navigate={navigate} propertyRefLookup={propertyRefLookup} depth={depth + 1} />
+          <Box component="span" key={itemIndex}>
+            {itemIndex > 0 && ', '}
+            <AdditionalPropertyValue value={item} navigate={navigate} propertyRefLookup={propertyRefLookup} />
           </Box>
         ))}
-      </Box>
+      </Typography>
     );
   }
 
@@ -129,18 +138,17 @@ function AdditionalPropertyValue({
     }
 
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, pl: depth > 0 ? 1.5 : 0 }}>
+      <Typography component="span" sx={{ color: COLORS.textPrimary, fontFamily: 'monospace', fontSize: '0.78rem', wordBreak: 'break-word' }}>
         {entries.map(([keyName, entryValue]) => (
-          <Box key={keyName} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(120px, max-content) minmax(0, 1fr)' }, columnGap: 1.25, rowGap: 0.25 }}>
-            <Typography component="span" sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.72rem', textTransform: 'uppercase', wordBreak: 'break-word' }}>
-              {keyName}
+          <Box component="span" key={keyName}>
+            {keyName !== entries[0][0] && '; '}
+            <Typography component="span" sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.72rem', wordBreak: 'break-word' }}>
+              {formatPropertyName(keyName)}:{' '}
             </Typography>
-            <Box sx={{ minWidth: 0 }}>
-              <AdditionalPropertyValue value={entryValue} navigate={navigate} propertyRefLookup={propertyRefLookup} depth={depth + 1} />
-            </Box>
+            <AdditionalPropertyValue value={entryValue} navigate={navigate} propertyRefLookup={propertyRefLookup} />
           </Box>
         ))}
-      </Box>
+      </Typography>
     );
   }
 
@@ -257,6 +265,41 @@ function ExternalRefsTable({ refs }: { refs: ExternalReference[] }) {
   );
 }
 
+function AdditionalPropertiesTable({
+  entries,
+  navigate,
+  propertyRefLookup,
+}: {
+  entries: [string, unknown][];
+  navigate: (path: string) => void;
+  propertyRefLookup: Record<string, StixPropertyRef>;
+}) {
+  return (
+    <TableContainer component={Paper} sx={{ bgcolor: COLORS.headerBackground, border: `1px solid ${COLORS.dataContainerBorder}`, borderRadius: 2 }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell sx={tableHeadCell}>Property</TableCell>
+            <TableCell sx={tableHeadCell}>Value</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {entries.map(([key, val]) => (
+            <TableRow key={key}>
+              <TableCell sx={{ ...tableBodyCell, color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.75rem', width: { xs: '38%', sm: '28%' }, verticalAlign: 'top', textTransform: 'none' }}>
+                {formatPropertyName(key)}
+              </TableCell>
+              <TableCell sx={{ ...tableBodyCell, color: COLORS.textPrimary, verticalAlign: 'top' }}>
+                <AdditionalPropertyValue value={val} navigate={navigate} propertyRefLookup={propertyRefLookup} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
 function RelationshipTable({
   title,
   rows,
@@ -324,39 +367,40 @@ function RelationshipTable({
 export default function StixObjectDetail({ stixId, onDisplayNameChange }: Props) {
   const navigate = useNavigate();
 
-  const [stix, setStix] = useState<StixObject | null>(null);
-  const [rels, setRels] = useState<StixRelationships | null>(null);
-  const [objectError, setObjectError] = useState<string | null>(null);
-  const [relsError, setRelsError] = useState<string | null>(null);
-  const [objectLoading, setObjectLoading] = useState(true);
-  const [relsLoading, setRelsLoading] = useState(true);
+  const [stixData, setStixData] = useState<RequestData<StixObject> | null>(null);
+  const [relsData, setRelsData] = useState<RequestData<StixRelationships> | null>(null);
+  const [objectError, setObjectError] = useState<RequestError | null>(null);
+  const [relsError, setRelsError] = useState<RequestError | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    setObjectLoading(true);
-    setRelsLoading(true);
-    setObjectError(null);
-    setRelsError(null);
-    setStix(null);
-    setRels(null);
 
     api.stixById(stixId, controller.signal)
       .then((nextStix) => {
-        setStix(nextStix);
+        setStixData({ requestId: stixId, data: nextStix });
+        setObjectError(null);
         onDisplayNameChange?.(getDisplayName(nextStix, stixId));
       })
-      .catch(e => { if (e.name !== 'AbortError') setObjectError(String(e)); })
-      .finally(() => setObjectLoading(false));
+      .catch(e => { if (e.name !== 'AbortError') setObjectError({ requestId: stixId, message: String(e) }); });
 
     api.stixRelationships(stixId, controller.signal)
-      .then(setRels)
-      .catch(e => { if (e.name !== 'AbortError') setRelsError(String(e)); })
-      .finally(() => setRelsLoading(false));
+      .then((nextRels) => {
+        setRelsData({ requestId: stixId, data: nextRels });
+        setRelsError(null);
+      })
+      .catch(e => { if (e.name !== 'AbortError') setRelsError({ requestId: stixId, message: String(e) }); });
 
     return () => controller.abort();
   }, [onDisplayNameChange, stixId]);
 
   // ── Derive display values ─────────────────────────────────────────────────
+
+  const stix = stixData?.requestId === stixId ? stixData.data : null;
+  const rels = relsData?.requestId === stixId ? relsData.data : null;
+  const objectErrorMessage = objectError?.requestId === stixId ? objectError.message : null;
+  const relsErrorMessage = relsError?.requestId === stixId ? relsError.message : null;
+  const objectLoading = !stix && !objectErrorMessage;
+  const relsLoading = !rels && !relsErrorMessage;
 
   const props = (stix?.properties ?? {}) as Record<string, unknown>;
   const description = props.description as string | undefined;
@@ -390,9 +434,9 @@ export default function StixObjectDetail({ stixId, onDisplayNameChange }: Props)
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {objectLoading && <LoadingSpinner />}
-      {objectError && <ErrorDisplay message={objectError} />}
+      {objectErrorMessage && <ErrorDisplay message={objectErrorMessage} />}
 
-      {!objectLoading && !objectError && stix && (
+      {!objectLoading && !objectErrorMessage && stix && (
         <>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
             <Chip
@@ -508,39 +552,14 @@ export default function StixObjectDetail({ stixId, onDisplayNameChange }: Props)
             </Box>
           )}
 
-          {/* Additional Properties accordion */}
+          {/* Additional Properties */}
           {extraEntries.length > 0 && (
-            <Accordion
-              disableGutters
-              elevation={0}
-              sx={{
-                bgcolor: COLORS.headerBackground,
-                border: `1px solid ${COLORS.dataContainerBorder}`,
-                borderRadius: '8px !important',
-                '&:before': { display: 'none' },
-              }}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMore sx={{ color: COLORS.textMuted }} />}
-                sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 0 } }}
-              >
-                <Typography sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.75rem', letterSpacing: 1, textTransform: 'uppercase' }}>
-                  Additional Properties ({extraEntries.length})
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ pt: 0 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  {extraEntries.map(([key, val]) => (
-                    <Box key={key}>
-                      <Typography sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.68rem', letterSpacing: 1, textTransform: 'uppercase', mb: 0.25 }}>
-                        {key}
-                      </Typography>
-                      <AdditionalPropertyValue value={val} navigate={navigate} propertyRefLookup={propertyRefLookup} />
-                    </Box>
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
+            <Box>
+              <Typography sx={sectionLabel}>Additional Properties</Typography>
+              <Box sx={{ mt: 0.25 }}>
+                <AdditionalPropertiesTable entries={extraEntries} navigate={navigate} propertyRefLookup={propertyRefLookup} />
+              </Box>
+            </Box>
           )}
 
           <Divider sx={{ borderColor: COLORS.dataContainerBorder }} />
@@ -554,9 +573,9 @@ export default function StixObjectDetail({ stixId, onDisplayNameChange }: Props)
         </Typography>
 
         {relsLoading && <LoadingSpinner />}
-        {relsError && <ErrorDisplay message={relsError} />}
+        {relsErrorMessage && <ErrorDisplay message={relsErrorMessage} />}
 
-        {!relsLoading && !relsError && rels && (
+        {!relsLoading && !relsErrorMessage && rels && (
           <>
             <RelationshipTable title="References (This → Other)" rows={rels.references} navigate={navigate} />
             <RelationshipTable title="Referenced By (Other → This)" rows={rels.referenced_by} navigate={navigate} />
