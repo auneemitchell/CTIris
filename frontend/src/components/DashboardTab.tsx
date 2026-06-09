@@ -12,7 +12,7 @@ import MostActiveThreats from './MostActiveThreats';
 import MostActiveMalware from './MostActiveMalware';
 import Heatmap from './HeatMap';
 import DonutChart from './DonutChart';
-import CampaignList from './CampaignList';
+import MostRecentCampaigns from './MostRecentCampaigns';
 
 /**
  * Dashboard tab — stat cards and activity widgets.
@@ -118,11 +118,11 @@ export default function DashboardTab() {
           {/* ── CAMPAIGN LIST ─────────────────────────────────────────────────────────── */}
           <Box sx={{ p: 1, mt: 3 }}>
             <SectionHeader
-              title="CAMPAIGN LIST"
-              tooltip="Shows a list of observed campaigns. Select a campaign to view detailed intelligence."
+              title="MOST RECENT CAMPAIGNS"
+              tooltip="Shows the top 10 most recent campaigns. Select a campaign to view detailed intelligence."
               gutterBottom={false}
             />
-            <CampaignList />
+            <MostRecentCampaigns />
           </Box>
         </Box>
 
