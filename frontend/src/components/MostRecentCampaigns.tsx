@@ -29,7 +29,7 @@ interface RawStixData {
  * When a campaign object is clicked, a pop up modal appears with campaign information using the PopUpModal component.
  * @returns top 10 most active STIX campaign objects
  */
-export default function CampaignList() {
+export default function MostRecentCampaigns() {
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
