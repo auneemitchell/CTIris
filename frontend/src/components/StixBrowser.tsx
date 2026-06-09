@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Box, Drawer, FormControl, IconButton,
+  Box, FormControl,
   InputAdornment, InputLabel, MenuItem, Paper, Select,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Typography,
@@ -11,6 +11,7 @@ import { COLORS } from '../constants/themeColors';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { STIX_TYPE_KEYS } from '../constants/stixTypes';
+import PopUpModal from './PopUpModal';
 
 /**
  * Returns properties.name for most STIX types, falls back to stix_id for
@@ -59,7 +60,7 @@ export default function StixBrowser({ defaultType = '' }: Props) {
   const [fetchedFor, setFetchedFor] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState(defaultType);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<StixObject | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
   // Sync typeFilter when the parent navigates to a specific type without unmounting
   const [prevDefaultType, setPrevDefaultType] = useState(defaultType);
@@ -182,7 +183,7 @@ export default function StixBrowser({ defaultType = '' }: Props) {
                 {visible.map(obj => (
                   <TableRow
                     key={obj.stix_id}
-                    onClick={() => setSelected(obj)}
+                    onClick={() => setSelected(obj.stix_id)}
                     sx={{ cursor: 'pointer', '&:hover': { backgroundColor: COLORS.cardBackground, boxShadow: `0 4px 20px ${COLORS.hoverBoxShadow}` } }}
                   >
                     <TableCell sx={{ color: COLORS.textSecondary, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
@@ -205,58 +206,7 @@ export default function StixBrowser({ defaultType = '' }: Props) {
         </>
       )}
 
-      <Drawer
-        anchor="right"
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        PaperProps={{
-          sx: {
-            width: { xs: '100%', sm: 520 },
-            bgcolor: COLORS.backgroundDefault,
-            p: 3,
-            borderLeft: `2px solid ${COLORS.textQuaternary}`,
-          },
-        }}
-      >
-        {selected && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Box sx={{ flex: 1, mr: 1 }}>
-                <Typography variant="overline" sx={{ color: COLORS.textQuaternary, fontFamily: 'monospace', letterSpacing: 2 }}>
-                  {selected.type}
-                </Typography>
-                <Typography variant="h6" sx={{ color: COLORS.textPrimary, lineHeight: 1.3 }}>
-                  {getName(selected)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: COLORS.textMuted, fontFamily: 'monospace', wordBreak: 'break-all', display: 'block', mt: 0.5 }}>
-                  {selected.stix_id}
-                </Typography>
-              </Box>
-              <IconButton onClick={() => setSelected(null)} sx={{ color: COLORS.textMuted, mt: -0.5 }}>
-                <Typography sx={{ fontSize: '1rem', lineHeight: 1 }}>✕</Typography>
-              </IconButton>
-            </Box>
-            <Box
-              component="pre"
-              sx={{
-                color: COLORS.textPrimary,
-                fontSize: '0.72rem',
-                overflow: 'auto',
-                bgcolor: COLORS.backgroundContainer,
-                p: 2,
-                borderRadius: 1,
-                border: `1px solid ${COLORS.dataContainerBorder}`,
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                fontFamily: 'monospace',
-                maxHeight: 'calc(100vh - 160px)',
-              }}
-            >
-              {JSON.stringify(selected.properties, null, 2)}
-            </Box>
-          </>
-        )}
-      </Drawer>
+      <PopUpModal stixId={selected} onClose={() => setSelected(null)} />
     </Box>
   );
 }
