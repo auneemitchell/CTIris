@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { COLORS } from '../constants/themeColors';
 import SectionHeader from './SectionHeader';
 import DashboardTab from './DashboardTab';
@@ -18,19 +18,15 @@ import StixBrowser from './StixBrowser';
  * and passes the type as the initial filter.
  */
 export default function DashboardBody() {
-  const [tab, setTab] = useState(0);
-  const [selectedType, setSelectedType] = useState('');
-
-  function navigateToType(type: string) {
-    setSelectedType(type);
-    setTab(2);
-  }
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tab = location.pathname.startsWith('/feeds') ? 1 : location.pathname.startsWith('/stix') ? 2 : 0;
 
   return (
     <Box sx={{ bgcolor: COLORS.backgroundContainer, minHeight: '100vh', paddingX: { xs: 2, md: 8 }, paddingY: 2, pb: 10 }}>
       <Tabs
         value={tab}
-        onChange={(_, v: number) => setTab(v)}
+        onChange={(_, v: number) => { if (v !== tab) navigate(v === 1 ? '/feeds' : v === 2 ? '/stix' : '/'); }}
         sx={{
           mb: 3,
           '& .MuiTab-root': { color: COLORS.textMuted, fontFamily: 'monospace', letterSpacing: 1.5, fontSize: '0.75rem' },
@@ -49,7 +45,7 @@ export default function DashboardBody() {
             title="THREAT INTELLIGENCE SUMMARY"
             tooltip="Counts of the core STIX Domain Object (SDO) types currently in the database. STIX (Structured Threat Information eXpression) is a standardized language for describing cyber threats — each type captures a different aspect, such as Malware for malicious software, Threat Actor for the groups behind attacks, or Vulnerability for known weaknesses."
           />
-          <DashboardTab onTypeClick={navigateToType} />
+          <DashboardTab />
         </Box>
         <Box sx={{ display: tab === 1 ? 'block' : 'none' }}>
           <SectionHeader
@@ -61,9 +57,9 @@ export default function DashboardBody() {
         <Box sx={{ display: tab === 2 ? 'block' : 'none' }}>
           <SectionHeader
             title="STIX OBJECTS"
-            tooltip="A full browser of all STIX objects ingested from your feeds. Filter by type to narrow the list, or search by name or ID. Click any row to inspect the complete STIX JSON payload for that object."
+            tooltip="A full browser of all STIX objects ingested from your feeds. Filter by type to narrow the list, or search by name or ID. Click any row to view a detailed profile for that object."
           />
-          <StixBrowser defaultType={selectedType} />
+          <StixBrowser />
         </Box>
       </Box>
     </Box>
