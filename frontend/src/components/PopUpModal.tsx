@@ -48,7 +48,7 @@ export default function PopUpModal({ stixId, onClose }: Props) {
 
     const props = (stix?.properties || {}) as StixProperties;
     const displayName = props.name || stix?.stix_id || 'Unnamed Threat Intel Profile';
-    const description = props.description || 'No deep analytical description found inside this payload document.';
+    const description = props.description || 'No description found.';
     const aliases = Array.isArray(props.aliases) ? props.aliases : [];
 
     return (
