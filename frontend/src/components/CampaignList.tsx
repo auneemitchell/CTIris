@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, List, ListItemButton, ListItemText, Typography } from '@mui/material';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { api } from '../api/client';
 import { COLORS } from '../constants/themeColors';
-import PopUpModal from './PopUpModal';
 
 interface CampaignData {
   stix_id: string;
@@ -32,10 +32,10 @@ interface RawStixData {
  * campaign objects
  */
 export default function CampaignList() {
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -113,7 +113,7 @@ export default function CampaignList() {
           return (
             <ListItemButton
               key={c.stix_id}
-              onClick={() => setSelectedId(c.stix_id)}
+              onClick={() => navigate('/stix/' + encodeURIComponent(c.stix_id))}
               sx={{
                 py: 0.25,
                 border: `1px solid ${COLORS.dataContainerBorder}`,
@@ -144,10 +144,6 @@ export default function CampaignList() {
         })}
       </List>
 
-      <PopUpModal
-        stixId={selectedId}
-        onClose={() => setSelectedId(null)}
-      />
     </Box>
   );
 }

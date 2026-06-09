@@ -1,10 +1,11 @@
 import { Box, Tab, Tabs } from '@mui/material';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { COLORS } from '../constants/themeColors';
 import SectionHeader from './SectionHeader';
 import DashboardTab from './DashboardTab';
 import FeedsTab from './FeedsTab';
 import StixBrowser from './StixBrowser';
+import StixObjectDetail from './StixObjectDetail';
 
 /**
  * Main content area — three-tab layout: Dashboard, Feeds, STIX Objects.
@@ -20,6 +21,8 @@ import StixBrowser from './StixBrowser';
 export default function DashboardBody() {
   const location = useLocation();
   const navigate = useNavigate();
+  const stixDetailMatch = useMatch('/stix/:id');
+  const stixObjectId = stixDetailMatch ? decodeURIComponent(stixDetailMatch.params.id!) : null;
   const tab = location.pathname.startsWith('/feeds') ? 1 : location.pathname.startsWith('/stix') ? 2 : 0;
 
   return (
@@ -59,7 +62,7 @@ export default function DashboardBody() {
             title="STIX OBJECTS"
             tooltip="A full browser of all STIX objects ingested from your feeds. Filter by type to narrow the list, or search by name or ID. Click any row to view a detailed profile for that object."
           />
-          <StixBrowser />
+          {stixObjectId ? <StixObjectDetail stixId={stixObjectId} /> : <StixBrowser />}
         </Box>
       </Box>
     </Box>
