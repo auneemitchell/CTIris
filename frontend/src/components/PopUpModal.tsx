@@ -144,10 +144,10 @@ export default function PopUpModal({ stixId, onClose }: Props) {
                                 <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
                                     {stix.type === 'campaign'
                                         ? (props.first_seen
-                                            ? new Date(props.first_seen).toLocaleDateString('sv-SE')
+                                            ? new Date(props.first_seen).toISOString().split('T')[0]
                                             : 'Unknown')
                                         : (stix.stix_created
-                                            ? new Date(stix.stix_created).toLocaleDateString('sv-SE')
+                                            ? new Date(stix.stix_created).toISOString().split('T')[0]
                                             : 'Unknown')}
                                 </Typography>
                             </Box>
@@ -156,10 +156,10 @@ export default function PopUpModal({ stixId, onClose }: Props) {
                                 <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
                                     {stix.type === 'campaign'
                                         ? (props.last_seen
-                                            ? new Date(props.last_seen).toLocaleDateString('sv-SE')
+                                            ? new Date(props.last_seen).toISOString().split('T')[0]
                                             : 'Unknown')
                                         : (stix.stix_modified
-                                            ? new Date(stix.stix_modified).toLocaleDateString('sv-SE')
+                                            ? new Date(stix.stix_modified).toISOString().split('T')[0]
                                             : 'Unknown')}
                                 </Typography>
                             </Box>
