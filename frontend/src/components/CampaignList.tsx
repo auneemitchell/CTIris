@@ -25,7 +25,7 @@ interface RawStixData {
 }
 
 /**
- * Functional component to display the top 10 most active STIX campaign objects, sorted by last_seen descending.
+ * Functional component to display the top 10 most recent STIX campaign objects, sorted by last_seen descending.
  * When a campaign object is clicked, a pop up modal appears with campaign information using the PopUpModal component.
  * @returns top 10 most active STIX campaign objects
  */
