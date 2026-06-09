@@ -47,6 +47,38 @@ export interface Feed {
   created_at: string;
 }
 
+/** One entry in the "references" list — an object that this STIX object points to via a relationship. */
+export interface StixRelationshipRef {
+  /** The STIX relationship verb, e.g. `uses`, `targets`, `mitigates`. */
+  relationship_type: string;
+  /** STIX ID of the referenced (target) object. */
+  target_ref: string;
+  /** Display name of the target object, or null if unavailable. */
+  target_name: string | null;
+  /** STIX type of the target object. */
+  target_type: string;
+}
+
+/** One entry in the "referenced_by" list — an object that points to this STIX object via a relationship. */
+export interface StixRelationshipBackRef {
+  /** The STIX relationship verb, e.g. `uses`, `targets`, `mitigates`. */
+  relationship_type: string;
+  /** STIX ID of the referencing (source) object. */
+  source_ref: string;
+  /** Display name of the source object, or null if unavailable. */
+  source_name: string | null;
+  /** STIX type of the source object. */
+  source_type: string;
+}
+
+/** Relationship data for a single STIX object — two directional lists. */
+export interface StixRelationships {
+  /** Objects that this object references as source_ref. */
+  references: StixRelationshipRef[];
+  /** Objects that reference this object as target_ref. */
+  referenced_by: StixRelationshipBackRef[];
+}
+
 /** One ingestion run record — written after every poll attempt, success or failure. */
 export interface IngestionLog {
   id: string;
@@ -107,6 +139,10 @@ export const api = {
 
   /** Fetch a single STIX object by its full ID (e.g. `malware--uuid`). */
   stixById: (id: string, signal?: AbortSignal) => get<StixObject>(`/stix/${encodeURIComponent(id)}`, signal),
+
+  /** Fetch all relationships involving a STIX object, split into two directional lists. */
+  stixRelationships: (id: string, signal?: AbortSignal) =>
+    get<StixRelationships>(`/stix/${encodeURIComponent(id)}/relationships`, signal),
 
   /** Fetch all configured TAXII feeds and their current status. */
   feeds: () => get<Feed[]>('/feeds'),

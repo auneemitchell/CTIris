@@ -159,6 +159,59 @@ def top_by_relationships(
     return [dict(row) for row in rows]
 
 
+@app.get("/stix/{stix_id}/relationships")
+def get_stix_relationships(stix_id: str, conn=Depends(get_db)):
+    """Return all STIX relationship objects involving the given STIX ID.
+
+    Returns two lists:
+    - references: relationship objects where stix_id is source_ref (what this object points to).
+      Each entry includes the resolved name and type of the target object.
+    - referenced_by: relationship objects where stix_id is target_ref (what points to this object).
+      Each entry includes the resolved name and type of the source object.
+
+    Returns empty lists if no relationships exist — never 404.
+
+    Args:
+        stix_id: The STIX object ID (e.g. "malware--uuid").
+
+    Returns:
+        { references: [...], referenced_by: [...] }
+
+    Example:
+        GET /stix/malware--4e57a4d2-.../relationships
+    """
+    references_stmt = sa.text("""
+        SELECT
+            rel.properties->>'relationship_type' AS relationship_type,
+            rel.properties->>'target_ref'        AS target_ref,
+            target.properties->>'name'           AS target_name,
+            target.type                          AS target_type
+        FROM stix_objects rel
+        JOIN stix_objects target ON target.stix_id = rel.properties->>'target_ref'
+        WHERE rel.type = 'relationship'
+          AND rel.properties->>'source_ref' = :stix_id
+        ORDER BY relationship_type, target_name
+    """)
+    referenced_by_stmt = sa.text("""
+        SELECT
+            rel.properties->>'relationship_type' AS relationship_type,
+            rel.properties->>'source_ref'        AS source_ref,
+            source.properties->>'name'           AS source_name,
+            source.type                          AS source_type
+        FROM stix_objects rel
+        JOIN stix_objects source ON source.stix_id = rel.properties->>'source_ref'
+        WHERE rel.type = 'relationship'
+          AND rel.properties->>'target_ref' = :stix_id
+        ORDER BY relationship_type, source_name
+    """)
+    references = conn.execute(references_stmt, {"stix_id": stix_id}).mappings().fetchall()
+    referenced_by = conn.execute(referenced_by_stmt, {"stix_id": stix_id}).mappings().fetchall()
+    return {
+        "references": [dict(row) for row in references],
+        "referenced_by": [dict(row) for row in referenced_by],
+    }
+
+
 @app.get("/stix/{stix_id}")
 def get_stix(stix_id: str, conn=Depends(get_db)):
     """Return a single STIX object by its ID.
