@@ -106,7 +106,7 @@ export default function MostRecentCampaigns() {
       }}
     >
       <List sx={{ overflowY: 'auto', flexGrow: 1, p: 0 }}>
-        {campaigns.map((c, index) => {
+        {campaigns.map((c) => {
           const firstSeen = c.first_seen
             ? new Date(c.first_seen).toISOString().split('T')[0]
             : 'N/A';
