@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box, FormControl,
   InputAdornment, InputLabel, MenuItem, Paper, Select,
@@ -28,46 +29,48 @@ function formatDate(d: string | null | undefined) {
   return new Date(d).toLocaleString();
 }
 
-interface Props {
-  /**
-   * Pre-select a type filter on mount. Set by DashboardBody when the user
-   * clicks a stat card, so the browser opens already filtered to that type.
-   */
-  defaultType?: string;
-}
-
 /**
  * Searchable, filterable table of all ingested STIX objects.
  *
- * Type filter (server-side): changing the dropdown fires a new API request
- * because result sets are too large to fetch all types upfront.
- * An AbortController cancels the previous in-flight request when the filter
- * changes quickly, preventing stale results from overwriting newer ones.
+ * Type filter (server-side): driven by the ?type= URL search param. Changing
+ * the dropdown navigates to a new URL, which re-derives typeFilter and fires
+ * a new fetch. An AbortController cancels in-flight requests on filter change.
  *
  * Search (client-side): filters the already-fetched array by name or stix_id
  * without an extra API call.
  *
- * Detail drawer: clicking a row opens a right-side panel showing the full
- * STIX JSON payload (the properties field) exactly as stored in the database.
- *
- * The second useEffect syncs typeFilter when the defaultType prop changes.
- * This is needed because the component stays mounted (CSS visibility) — if it
- * unmounted on tab switch, the prop change on remount would handle it for free.
+ * Detail modal: clicking a row navigates to /stix/{id}, opening PopUpModal.
+ * The modal self-fetches the full object via api.stixById.
  */
-export default function StixBrowser({ defaultType = '' }: Props) {
+export default function StixBrowser() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Derive typeFilter from URL, but only when on a /stix path so that
+  // navigating to another tab doesn't trigger spurious re-fetches while
+  // the component stays mounted but hidden.
+  const isStixPath = location.pathname.startsWith('/stix');
+  const urlType = isStixPath ? (searchParams.get('type') ?? '') : null;
+
   const [objects, setObjects] = useState<StixObject[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fetchedFor, setFetchedFor] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState(defaultType);
+  const [typeFilter, setTypeFilter] = useState(urlType ?? '');
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
 
-  // Sync typeFilter when the parent navigates to a specific type without unmounting
-  const [prevDefaultType, setPrevDefaultType] = useState(defaultType);
-  if (prevDefaultType !== defaultType) {
-    setPrevDefaultType(defaultType);
-    setTypeFilter(defaultType);
+  // Sync local typeFilter when the URL type param changes (stat card click,
+  // back/forward). Fires during render to avoid a one-frame stale display.
+  const [prevUrlType, setPrevUrlType] = useState(urlType);
+  if (urlType !== null && prevUrlType !== urlType) {
+    setPrevUrlType(urlType);
+    setTypeFilter(urlType);
   }
+
+  // Derive the selected object ID from the URL path (e.g. /stix/malware--uuid)
+  const objectId = location.pathname.startsWith('/stix/')
+    ? decodeURIComponent(location.pathname.slice('/stix/'.length)) || null
+    : null;
 
   // loading is true whenever typeFilter has changed but the fetch hasn't settled yet
   const loading = fetchedFor !== typeFilter;
@@ -131,7 +134,7 @@ export default function StixBrowser({ defaultType = '' }: Props) {
           <Select
             value={typeFilter}
             label="Type"
-            onChange={e => setTypeFilter(e.target.value)}
+            onChange={e => navigate('/stix' + (e.target.value ? '?type=' + e.target.value : ''))}
             MenuProps={{
               PaperProps: {
                 sx: {
@@ -183,7 +186,7 @@ export default function StixBrowser({ defaultType = '' }: Props) {
                 {visible.map(obj => (
                   <TableRow
                     key={obj.stix_id}
-                    onClick={() => setSelected(obj.stix_id)}
+                    onClick={() => navigate('/stix/' + encodeURIComponent(obj.stix_id) + (typeFilter ? '?type=' + typeFilter : ''))}
                     sx={{ cursor: 'pointer', '&:hover': { backgroundColor: COLORS.cardBackground, boxShadow: `0 4px 20px ${COLORS.hoverBoxShadow}` } }}
                   >
                     <TableCell sx={{ color: COLORS.textSecondary, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
@@ -206,7 +209,7 @@ export default function StixBrowser({ defaultType = '' }: Props) {
         </>
       )}
 
-      <PopUpModal stixId={selected} onClose={() => setSelected(null)} />
+      <PopUpModal stixId={objectId} onClose={() => navigate('/stix' + (typeFilter ? '?type=' + typeFilter : ''))} />
     </Box>
   );
 }
