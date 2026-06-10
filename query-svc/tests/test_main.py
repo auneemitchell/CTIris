@@ -150,7 +150,7 @@ class TestGeoHeatmap:
     def test_returns_aggregated_rows(self):
         rows = [
             {"country": "US", "location_name": "United States", "relationship_type": "targets", "count": 12},
-            {"country": "RU", "location_name": "Russia", "relationship_type": "originates-from", "count": 5},
+            {"country": "UA", "location_name": "Ukraine", "relationship_type": "targets", "count": 5},
         ]
         app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
         response = client.get("/stix/geo-heatmap")

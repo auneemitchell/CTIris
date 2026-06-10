@@ -186,9 +186,7 @@ def geo_heatmap(conn=Depends(get_db)):
         JOIN stix_objects loc
           ON loc.stix_id = rel.properties->>'target_ref'
         WHERE rel.type = 'relationship'
-          AND rel.properties->>'relationship_type' IN (
-              'located-at', 'originates-from', 'targets'
-          )
+          AND rel.properties->>'relationship_type' = 'targets'
           AND loc.type = 'location'
         GROUP BY
             loc.properties->>'country',

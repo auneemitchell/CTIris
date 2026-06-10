@@ -49,8 +49,19 @@ const ALPHA2_TO_ALPHA3: Record<string, string> = {
 };
 
 // Fallback: match topojson geography names → alpha-3 when a location has no `country` field
+// Includes Natural Earth name variants used by world-atlas (e.g. "United States of America")
 const COUNTRY_NAME_TO_ALPHA3: Record<string, string> = {
-    'united states': 'USA', 'russia': 'RUS', 'china': 'CHN',
+    'united states': 'USA', 'united states of america': 'USA',
+    'russia': 'RUS', 'russian federation': 'RUS',
+    'south korea': 'KOR', 'republic of korea': 'KOR',
+    'north korea': 'PRK', 'dem. rep. korea': 'PRK',
+    'china': 'CHN', 'taiwan': 'TWN',
+    'czech republic': 'CZE', 'czechia': 'CZE',
+    'united kingdom': 'GBR', 'great britain': 'GBR',
+    'dr congo': 'COD', 'democratic republic of the congo': 'COD',
+    'republic of the congo': 'COG',
+    'ivory coast': 'CIV', "côte d'ivoire": 'CIV',
+    'bosnia and herzegovina': 'BIH', 'bosnia': 'BIH',
     'iran': 'IRN', 'north korea': 'PRK', 'india': 'IND',
     'germany': 'DEU', 'france': 'FRA', 'israel': 'ISR',
     'australia': 'AUS', 'ukraine': 'UKR', 'united kingdom': 'GBR',
@@ -109,12 +120,8 @@ function getCountryColor(count: number, maxCount: number): string {
     return COLORS.heatmapCritical;
 }
 
-function buildTooltipLabel(displayName: string, entry: CountryEntry): string {
-    const parts = Object.entries(entry.breakdown)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([rel, n]) => `${rel}: ${n}`)
-        .join(', ');
-    return `${displayName}: ${entry.count} relationship${entry.count !== 1 ? 's' : ''} (${parts})`;
+function buildTooltipLabel(displayName: string, count: number): string {
+    return `${displayName}: ${count} target relationship${count !== 1 ? 's' : ''}`;
 }
 
 export default function Heatmap() {
@@ -139,7 +146,7 @@ export default function Heatmap() {
 
                     if (!aggregated[iso3]) {
                         aggregated[iso3] = {
-                            name: location_name || ALPHA3_TO_DISPLAY_NAME[iso3] || iso3,
+                            name: ALPHA3_TO_DISPLAY_NAME[iso3] || location_name || iso3,
                             count: 0,
                             breakdown: {},
                         };
@@ -195,7 +202,7 @@ export default function Heatmap() {
                                 const count = entry ? entry.count : 0;
                                 const displayName = entry ? entry.name : geoName;
                                 const tooltipLabel = entry
-                                    ? buildTooltipLabel(displayName, entry)
+                                    ? buildTooltipLabel(displayName, entry.count)
                                     : `${displayName}: no location relationships`;
 
                                 return (
@@ -250,7 +257,7 @@ export default function Heatmap() {
                         ))}
                     </Box>
                     <Typography sx={{ color: COLORS.textMuted, fontSize: '0.65rem', fontFamily: 'monospace' }}>
-                        CRITICAL
+                        HIGH
                     </Typography>
                 </Box>
             </Box>
