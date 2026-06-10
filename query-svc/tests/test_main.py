@@ -119,6 +119,17 @@ class TestListStix:
         response = client.get("/stix?limit=1001")
         assert response.status_code == 422
 
+    def test_rejects_negative_offset(self):
+        response = client.get("/stix?offset=-1")
+        assert response.status_code == 422
+
+    def test_filters_by_type(self):
+        rows = [{"stix_id": STIX_ID, "type": "malware", "feed_id": FEED_ID}]
+        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        response = client.get("/stix?type=malware")
+        assert response.status_code == 200
+        assert response.json()[0]["type"] == "malware"
+
 
 # ---------------------------------------------------------------------------
 # GET /stix/{stix_id}
@@ -297,3 +308,75 @@ class TestListIngestionLog:
         response = client.get("/ingestion-log")
         assert response.status_code == 200
         assert len(response.json()) == 1
+
+    def test_filters_by_valid_feed_id(self):
+        rows = [{"id": uuid.uuid4(), "feed_id": FEED_ID, "status": "success", "items_new": 5}]
+        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        response = client.get(f"/ingestion-log?feed_id={FEED_ID}")
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    def test_rejects_limit_below_1(self):
+        response = client.get("/ingestion-log?limit=0")
+        assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# GET /stix/counts
+# ---------------------------------------------------------------------------
+
+class TestCountStix:
+    def test_returns_empty_dict_when_no_data(self):
+        response = client.get("/stix/counts")
+        assert response.status_code == 200
+        assert response.json() == {}
+
+    def test_returns_counts_by_type(self):
+        rows = [
+            {"type": "malware", "count": 729},
+            {"type": "relationship", "count": 21025},
+        ]
+        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        response = client.get("/stix/counts")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["malware"] == 729
+        assert data["relationship"] == 21025
+
+
+# ---------------------------------------------------------------------------
+# GET /stix/top-by-relationships
+# ---------------------------------------------------------------------------
+
+class TestTopByRelationships:
+    def test_requires_type_param(self):
+        response = client.get("/stix/top-by-relationships")
+        assert response.status_code == 422
+
+    def test_returns_top_entities(self):
+        rows = [
+            {"stix_id": STIX_ID, "type": "malware", "name": "Cobalt Strike", "relationship_count": 42},
+        ]
+        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        response = client.get("/stix/top-by-relationships?type=malware")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["stix_id"] == STIX_ID
+        assert data[0]["relationship_count"] == 42
+
+    def test_accepts_multiple_types(self):
+        rows = [
+            {"stix_id": STIX_ID, "type": "malware", "name": "X", "relationship_count": 10},
+        ]
+        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        response = client.get("/stix/top-by-relationships?type=malware&type=threat-actor")
+        assert response.status_code == 200
+
+    def test_rejects_limit_above_50(self):
+        response = client.get("/stix/top-by-relationships?type=malware&limit=51")
+        assert response.status_code == 422
+
+    def test_rejects_limit_below_1(self):
+        response = client.get("/stix/top-by-relationships?type=malware&limit=0")
+        assert response.status_code == 422
