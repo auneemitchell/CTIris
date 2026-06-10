@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box, FormControl,
   InputAdornment, InputLabel, MenuItem, Paper, Select,
@@ -12,7 +12,6 @@ import { COLORS } from '../constants/themeColors';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { STIX_TYPE_KEYS } from '../constants/stixTypes';
-import PopUpModal from './PopUpModal';
 
 /**
  * Returns properties.name for most STIX types, falls back to stix_id for
@@ -39,38 +38,20 @@ function formatDate(d: string | null | undefined) {
  * Search (client-side): filters the already-fetched array by name or stix_id
  * without an extra API call.
  *
- * Detail modal: clicking a row navigates to /stix/{id}, opening PopUpModal.
- * The modal self-fetches the full object via api.stixById.
+ * Detail view: clicking a row navigates to /stix/{id}, which renders the
+ * routed STIX detail page.
  */
 export default function StixBrowser() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Derive typeFilter from URL, but only when on a /stix path so that
-  // navigating to another tab doesn't trigger spurious re-fetches while
-  // the component stays mounted but hidden.
-  const isStixPath = location.pathname.startsWith('/stix');
-  const urlType = isStixPath ? (searchParams.get('type') ?? '') : null;
+  // Derive typeFilter directly from URL search params.
+  const typeFilter = searchParams.get('type') ?? '';
 
   const [objects, setObjects] = useState<StixObject[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fetchedFor, setFetchedFor] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState(urlType ?? '');
   const [search, setSearch] = useState('');
-
-  // Sync local typeFilter when the URL type param changes (stat card click,
-  // back/forward). Fires during render to avoid a one-frame stale display.
-  const [prevUrlType, setPrevUrlType] = useState(urlType);
-  if (urlType !== null && prevUrlType !== urlType) {
-    setPrevUrlType(urlType);
-    setTypeFilter(urlType);
-  }
-
-  // Derive the selected object ID from the URL path (e.g. /stix/malware--uuid)
-  const objectId = location.pathname.startsWith('/stix/')
-    ? decodeURIComponent(location.pathname.slice('/stix/'.length)) || null
-    : null;
 
   // loading is true whenever typeFilter has changed but the fetch hasn't settled yet
   const loading = fetchedFor !== typeFilter;
@@ -186,7 +167,7 @@ export default function StixBrowser() {
                 {visible.map(obj => (
                   <TableRow
                     key={obj.stix_id}
-                    onClick={() => navigate('/stix/' + encodeURIComponent(obj.stix_id) + (typeFilter ? '?type=' + typeFilter : ''))}
+                    onClick={() => navigate('/stix/' + encodeURIComponent(obj.stix_id))}
                     sx={{ cursor: 'pointer', '&:hover': { backgroundColor: COLORS.cardBackground, boxShadow: `0 4px 20px ${COLORS.hoverBoxShadow}` } }}
                   >
                     <TableCell sx={{ color: COLORS.textSecondary, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
@@ -209,7 +190,6 @@ export default function StixBrowser() {
         </>
       )}
 
-      <PopUpModal stixId={objectId} onClose={() => navigate('/stix' + (typeFilter ? '?type=' + typeFilter : ''))} />
     </Box>
   );
 }
