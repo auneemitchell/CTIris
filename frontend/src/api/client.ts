@@ -11,7 +11,7 @@
  */
 
 /** Base URL for all API requests. Routes through the nginx gateway on port 80. */
-const BASE = 'http://localhost/api';
+export const BASE = 'http://localhost/api';
 
 /**
  * A STIX object as stored in the database.
