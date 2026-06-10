@@ -6,6 +6,11 @@ import DashboardTab from './DashboardTab';
 import FeedsTab from './FeedsTab';
 import StixBrowser from './StixBrowser';
 
+interface Props {
+    tab: number;
+    setTab: (tab: number) => void;
+}
+
 /**
  * Main content area — three-tab layout: Dashboard, Feeds, STIX Objects.
  *
@@ -17,8 +22,7 @@ import StixBrowser from './StixBrowser';
  * a card calls navigateToType(type), which switches to the STIX Objects tab
  * and passes the type as the initial filter.
  */
-export default function DashboardBody() {
-  const [tab, setTab] = useState(0);
+export default function DashboardBody({tab, setTab}: Props) {
   const [selectedType, setSelectedType] = useState('');
 
   function navigateToType(type: string) {
@@ -27,7 +31,7 @@ export default function DashboardBody() {
   }
 
   return (
-    <Box sx={{ bgcolor: COLORS.backgroundContainer, minHeight: '100vh', paddingX: { xs: 2, md: 8 }, paddingY: 2, pb: 10 }}>
+    <Box sx={{ bgcolor: COLORS.backgroundContainer, minHeight: '100vh', overflowX: 'hidden', paddingX: { xs: 2, sm: 4, md: 8 }, paddingY: 2, pb: 10 }}>
       <Tabs
         value={tab}
         onChange={(_, v: number) => setTab(v)}
