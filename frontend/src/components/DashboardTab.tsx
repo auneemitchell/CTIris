@@ -10,8 +10,8 @@ import SectionHeader from './SectionHeader';
 import MostActiveThreats from './MostActiveThreats';
 import MostActiveMalware from './MostActiveMalware';
 import Heatmap from './HeatMap';
-import DonutChart from './DonutChart';
 import CampaignList from './CampaignList';
+import TargetedIndustries from './TargetedIndustries';
 
 interface Props {
   /** Called when a stat card is clicked. Switches to the STIX browser filtered to that type. */
@@ -109,14 +109,14 @@ export default function DashboardTab({ onTypeClick }: Props) {
         </Box>
 
         <Box sx = {{ flexDirection: 'row' }}>
-          {/* ── DONUT CHART ─────────────────────────────────────────────────────────── */}
+          {/* ── TARGETED INDUSTRIES ─────────────────────────────────────────────────────────── */}
           <Box sx={{ flex: 1, p: 1 }}>
             <SectionHeader
-              title="TARGETED INDUSTRY"
+              title="TARGETED INDUSTRIES"
               tooltip="Shows the distribution of industries based on keyword matches within STIX object content."
               gutterBottom={false}
             />
-            <DonutChart />
+            <TargetedIndustries />
           </Box>
 
           {/* ── CAMPAIGN LIST ─────────────────────────────────────────────────────────── */}
