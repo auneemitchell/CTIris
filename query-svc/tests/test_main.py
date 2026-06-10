@@ -138,6 +138,42 @@ class TestGetStix:
 
 
 # ---------------------------------------------------------------------------
+# GET /stix/geo-heatmap
+# ---------------------------------------------------------------------------
+
+class TestGeoHeatmap:
+    def test_returns_empty_list_when_no_data(self):
+        response = client.get("/stix/geo-heatmap")
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_returns_aggregated_rows(self):
+        rows = [
+            {"country": "US", "location_name": "United States", "relationship_type": "targets", "count": 12},
+            {"country": "RU", "location_name": "Russia", "relationship_type": "originates-from", "count": 5},
+        ]
+        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        response = client.get("/stix/geo-heatmap")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert data[0] == rows[0]
+        assert data[1] == rows[1]
+
+    def test_returns_null_country_when_location_has_no_country_field(self):
+        rows = [
+            {"country": None, "location_name": "Eastern Europe", "relationship_type": "targets", "count": 3},
+        ]
+        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        response = client.get("/stix/geo-heatmap")
+        assert response.status_code == 200
+        data = response.json()
+        assert data[0]["country"] is None
+        assert data[0]["location_name"] == "Eastern Europe"
+        assert data[0]["count"] == 3
+
+
+# ---------------------------------------------------------------------------
 # GET /stix/{stix_id}/relationships
 # ---------------------------------------------------------------------------
 

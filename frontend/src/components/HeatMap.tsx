@@ -6,53 +6,49 @@ import { api } from '../api/client';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 
-// public CDN source URL for world topojson data
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
+
+interface CountryEntry {
+    name: string;
+    count: number;
+    breakdown: Record<string, number>;
+}
+
 interface CountryMap {
-    [isoAlpha3: string]: {
-        name: string;
-        count: number;
-    };
+    [isoAlpha3: string]: CountryEntry;
 }
 
-interface ExternalReference {
-    description?: string;
-}
+// ISO 3166-1 alpha-2 → alpha-3 (STIX location objects use alpha-2 in `country`)
+const ALPHA2_TO_ALPHA3: Record<string, string> = {
+    AF: 'AFG', AL: 'ALB', DZ: 'DZA', AD: 'AND', AO: 'AGO', AR: 'ARG', AM: 'ARM',
+    AU: 'AUS', AT: 'AUT', AZ: 'AZE', BH: 'BHR', BD: 'BGD', BY: 'BLR', BE: 'BEL',
+    BJ: 'BEN', BT: 'BTN', BO: 'BOL', BA: 'BIH', BW: 'BWA', BR: 'BRA', BN: 'BRN',
+    BG: 'BGR', BF: 'BFA', BI: 'BDI', CV: 'CPV', KH: 'KHM', CM: 'CMR', CA: 'CAN',
+    CF: 'CAF', TD: 'TCD', CL: 'CHL', CN: 'CHN', CO: 'COL', KM: 'COM', CD: 'COD',
+    CG: 'COG', CR: 'CRI', HR: 'HRV', CU: 'CUB', CY: 'CYP', CZ: 'CZE', DK: 'DNK',
+    DJ: 'DJI', DO: 'DOM', EC: 'ECU', EG: 'EGY', SV: 'SLV', GQ: 'GNQ', ER: 'ERI',
+    EE: 'EST', SZ: 'SWZ', ET: 'ETH', FJ: 'FJI', FI: 'FIN', FR: 'FRA', GA: 'GAB',
+    GM: 'GMB', GE: 'GEO', DE: 'DEU', GH: 'GHA', GR: 'GRC', GT: 'GTM', GN: 'GIN',
+    GW: 'GNB', GY: 'GUY', HT: 'HTI', HN: 'HND', HU: 'HUN', IS: 'ISL', IN: 'IND',
+    ID: 'IDN', IR: 'IRN', IQ: 'IRQ', IE: 'IRL', IL: 'ISR', IT: 'ITA', JM: 'JAM',
+    JP: 'JPN', JO: 'JOR', KZ: 'KAZ', KE: 'KEN', KP: 'PRK', KR: 'KOR', KW: 'KWT',
+    KG: 'KGZ', LA: 'LAO', LV: 'LVA', LB: 'LBN', LS: 'LSO', LR: 'LBR', LY: 'LBY',
+    LI: 'LIE', LT: 'LTU', LU: 'LUX', MG: 'MDG', MW: 'MWI', MY: 'MYS', MV: 'MDV',
+    ML: 'MLI', MT: 'MLT', MR: 'MRT', MU: 'MUS', MX: 'MEX', MD: 'MDA', MC: 'MCO',
+    MN: 'MNG', ME: 'MNE', MA: 'MAR', MZ: 'MOZ', MM: 'MMR', NA: 'NAM', NP: 'NPL',
+    NL: 'NLD', NZ: 'NZL', NI: 'NIC', NE: 'NER', NG: 'NGA', MK: 'MKD', NO: 'NOR',
+    OM: 'OMN', PK: 'PAK', PA: 'PAN', PG: 'PNG', PY: 'PRY', PE: 'PER', PH: 'PHL',
+    PL: 'POL', PT: 'PRT', QA: 'QAT', RO: 'ROU', RU: 'RUS', RW: 'RWA', SA: 'SAU',
+    SN: 'SEN', RS: 'SRB', SL: 'SLE', SG: 'SGP', SK: 'SVK', SI: 'SVN', SO: 'SOM',
+    ZA: 'ZAF', SS: 'SSD', ES: 'ESP', LK: 'LKA', SD: 'SDN', SR: 'SUR', SE: 'SWE',
+    CH: 'CHE', SY: 'SYR', TW: 'TWN', TJ: 'TJK', TZ: 'TZA', TH: 'THA', TL: 'TLS',
+    TG: 'TGO', TT: 'TTO', TN: 'TUN', TR: 'TUR', TM: 'TKM', UG: 'UGA', UA: 'UKR',
+    AE: 'ARE', GB: 'GBR', US: 'USA', UY: 'URY', UZ: 'UZB', VE: 'VEN', VN: 'VNM',
+    YE: 'YEM', ZM: 'ZMB', ZW: 'ZWE',
+};
 
-interface StixProperties {
-    description?: string;
-    aliases?: string[];
-    x_mitre_aliases?: string[];
-    external_references?: ExternalReference[];
-}
-
-interface StixRawObject {
-    properties?: StixProperties;
-    description?: string;
-    aliases?: string[];
-    x_mitre_aliases?: string[];
-    external_references?: ExternalReference[];
-}
-
-/**
- * Function that displays a heatmap color based relative to the frequency of the country.
- * @param count - Number of occurences for a country
- * @param maxCount  - Maximum occurences across dataset
- * @returns HEX color string representing the intensity (Red)
- */
-function getCountryColor(count: number, maxCount: number): string {
-    if (!count || count === 0) return COLORS.heatmapBase;
-    const intensity = count / maxCount;
-    if (intensity < 0.2) return COLORS.heatmapLow;
-    if (intensity < 0.5) return COLORS.heatmapMedium;
-    if (intensity < 0.8) return COLORS.heatmapHigh;
-    return COLORS.heatmapCritical;
-}
-
-/**
- * Helper function to cross-reference country mentions in text to ISO3 codes
- */
+// Fallback: match topojson geography names → alpha-3 when a location has no `country` field
 const COUNTRY_NAME_TO_ALPHA3: Record<string, string> = {
     'united states': 'USA', 'russia': 'RUS', 'china': 'CHN',
     'iran': 'IRN', 'north korea': 'PRK', 'india': 'IND',
@@ -97,9 +93,6 @@ const COUNTRY_NAME_TO_ALPHA3: Record<string, string> = {
     'ivory coast': 'CIV', 'uganda': 'UGA', 'rwanda': 'RWA',
 };
 
-/**
- * Reverse mapping from ISO3 codes to display names
- */
 const ALPHA3_TO_DISPLAY_NAME: Record<string, string> = Object.fromEntries(
     Object.entries(COUNTRY_NAME_TO_ALPHA3).map(([name, iso3]) => [
         iso3,
@@ -107,64 +100,53 @@ const ALPHA3_TO_DISPLAY_NAME: Record<string, string> = Object.fromEntries(
     ])
 );
 
-/**
- * Functional component that displays the geographic distribution of the country mention frequency in the STIX data.
- * @returns full interactive world map with color coded frequency of threat intensity by countries
- */
+function getCountryColor(count: number, maxCount: number): string {
+    if (!count || count === 0) return COLORS.heatmapBase;
+    const intensity = count / maxCount;
+    if (intensity < 0.2) return COLORS.heatmapLow;
+    if (intensity < 0.5) return COLORS.heatmapMedium;
+    if (intensity < 0.8) return COLORS.heatmapHigh;
+    return COLORS.heatmapCritical;
+}
+
+function buildTooltipLabel(displayName: string, entry: CountryEntry): string {
+    const parts = Object.entries(entry.breakdown)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([rel, n]) => `${rel}: ${n}`)
+        .join(', ');
+    return `${displayName}: ${entry.count} relationship${entry.count !== 1 ? 's' : ''} (${parts})`;
+}
+
 export default function Heatmap() {
     const [countryData, setCountryData] = useState<CountryMap>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-useEffect(() => {
+    useEffect(() => {
         const controller = new AbortController();
-        // Fetch STIX objects of country mentions across multiple types to get a more comprehensive heatmap
-        const typesToFetch = ['intrusion-set', 'malware', 'campaign', 'threat-actor'];
 
-        
-        Promise.all(
-            // For each type, fetch up to 1000 objects to get a good sample size for the heatmap
-            typesToFetch.map((type) =>
-                // Fetch up to 1000 objects per type to get a good sample size for the heatmap
-                api.stix(type, 1000, 0, controller.signal).catch(() => [])
-            )
-        )
-            .then((results) => {
+        api.geoHeatmap(controller.signal)
+            .then((rows) => {
                 if (controller.signal.aborted) return;
 
                 const aggregated: CountryMap = {};
-                const allObjects = results.flat() as StixRawObject[];
 
-                // For each object, check if any country names are mentioned in its description, aliases, or external references
-                allObjects.forEach((obj) => {
-                    const props: StixProperties = obj.properties ?? obj;
+                rows.forEach(({ country, location_name, relationship_type, count }) => {
+                    let iso3: string | undefined;
+                    if (country) iso3 = ALPHA2_TO_ALPHA3[country.toUpperCase()];
+                    if (!iso3 && location_name) iso3 = COUNTRY_NAME_TO_ALPHA3[location_name.toLowerCase()];
+                    if (!iso3) return;
 
-                    // Combine relevant text fields to search for country mentions
-                    const text = [
-                        props.description ?? '',
-                        (props.aliases ?? []).join(' '),
-                        (props.x_mitre_aliases ?? []).join(' '),
-                        (props.external_references ?? [])
-                            .map((r: ExternalReference) => r.description ?? '')
-                            .join(' '),
-                    ]
-                        .join(' ')
-                        .toLowerCase();
-
-                        // Check if any country names are mentioned in the combined text
-                        Object.entries(COUNTRY_NAME_TO_ALPHA3).forEach(([countryName, iso3]) => {
-                        if (text.includes(countryName)) {
-                            // If this country hasn't been seen before, initialize it in the map
-                            if (!aggregated[iso3]) {
-                                aggregated[iso3] = {
-                                    name: ALPHA3_TO_DISPLAY_NAME[iso3] ?? iso3,
-                                    count: 0,
-                                };
-                            }
-                            // Increment the count for this country if mentioned in the text
-                            aggregated[iso3].count += 1;
-                        }
-                    });
+                    if (!aggregated[iso3]) {
+                        aggregated[iso3] = {
+                            name: location_name || ALPHA3_TO_DISPLAY_NAME[iso3] || iso3,
+                            count: 0,
+                            breakdown: {},
+                        };
+                    }
+                    aggregated[iso3].count += count;
+                    aggregated[iso3].breakdown[relationship_type] =
+                        (aggregated[iso3].breakdown[relationship_type] ?? 0) + count;
                 });
 
                 setCountryData(aggregated);
@@ -183,7 +165,7 @@ useEffect(() => {
     if (error) return <ErrorDisplay message={error} />;
 
     const countValues = Object.values(countryData).map((c) => c.count);
-    const maxAttacks = countValues.length > 0 ? Math.max(1, ...countValues) : 1;
+    const maxCount = countValues.length > 0 ? Math.max(1, ...countValues) : 1;
 
     return (
         <Box>
@@ -196,7 +178,6 @@ useEffect(() => {
                     p: 2,
                 }}
             >
-                
                 <ComposableMap
                     projection="geoMercator"
                     projectionConfig={{ scale: 120, center: [0, 30] }}
@@ -209,26 +190,21 @@ useEffect(() => {
                         {({ geographies }) =>
                             geographies.map((geo) => {
                                 const geoName = geo.properties.name || '';
-                                const normalizedGeoName = geoName.toLowerCase();
-
-                                // Cross-reference the geography name to our country map using the normalized name
-                                const matchedIso3 = COUNTRY_NAME_TO_ALPHA3[normalizedGeoName];
-                                const match = matchedIso3 ? countryData[matchedIso3] : null;
-                                const count = match ? match.count : 0;
-                                const displayName = match ? match.name : geoName;
-                                const geoFill = getCountryColor(count, maxAttacks);
+                                const matchedIso3 = COUNTRY_NAME_TO_ALPHA3[geoName.toLowerCase()];
+                                const entry = matchedIso3 ? countryData[matchedIso3] : null;
+                                const count = entry ? entry.count : 0;
+                                const displayName = entry ? entry.name : geoName;
+                                const tooltipLabel = entry
+                                    ? buildTooltipLabel(displayName, entry)
+                                    : `${displayName}: no location relationships`;
 
                                 return (
-                                    <Tooltip
-                                        key={geo.rsmKey}
-                                        title={`${displayName || 'Unknown'}: ${count.toLocaleString()} ATT&CK References`}
-                                        arrow
-                                    >
+                                    <Tooltip key={geo.rsmKey} title={tooltipLabel} arrow>
                                         <Geography
                                             geography={geo}
                                             style={{
                                                 default: {
-                                                    fill: geoFill,
+                                                    fill: getCountryColor(count, maxCount),
                                                     stroke: COLORS.headerBackground ?? '#1e1e24',
                                                     strokeWidth: 0.5,
                                                     outline: 'none',

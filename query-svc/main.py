@@ -159,6 +159,47 @@ def top_by_relationships(
     return [dict(row) for row in rows]
 
 
+@app.get("/stix/geo-heatmap")
+def geo_heatmap(conn=Depends(get_db)):
+    """Return geographic relationship counts for the heatmap widget.
+
+    Joins relationship objects to location objects and aggregates by country
+    and relationship type. Only the three relationship types that carry
+    geographic meaning are included: located-at, originates-from, and targets.
+
+    Returns:
+        List of {country, location_name, relationship_type, count} dicts.
+        country is an ISO 3166-1 alpha-2 code (may be null if the location
+        object has no country field). count is the number of relationships
+        of that type pointing at that location.
+
+    Example:
+        GET /stix/geo-heatmap
+    """
+    stmt = sa.text("""
+        SELECT
+            loc.properties->>'country'           AS country,
+            loc.properties->>'name'              AS location_name,
+            rel.properties->>'relationship_type' AS relationship_type,
+            COUNT(*)                             AS count
+        FROM stix_objects rel
+        JOIN stix_objects loc
+          ON loc.stix_id = rel.properties->>'target_ref'
+        WHERE rel.type = 'relationship'
+          AND rel.properties->>'relationship_type' IN (
+              'located-at', 'originates-from', 'targets'
+          )
+          AND loc.type = 'location'
+        GROUP BY
+            loc.properties->>'country',
+            loc.properties->>'name',
+            rel.properties->>'relationship_type'
+        ORDER BY country, relationship_type
+    """)
+    rows = conn.execute(stmt).mappings().fetchall()
+    return [dict(row) for row in rows]
+
+
 @app.get("/stix/{stix_id}/relationships")
 def get_stix_relationships(stix_id: str, conn=Depends(get_db)):
     """Return all STIX relationship objects involving the given STIX ID.
