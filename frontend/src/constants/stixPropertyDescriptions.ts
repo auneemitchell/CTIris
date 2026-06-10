@@ -1,6 +1,6 @@
 /**
  * STIX 2.1 Property and Object Definitions
- * 
+ *
  * Auto-generated from the STIX 2.1 specification.
  * Source: https://docs.oasis-open.org/cti/stix/v2.1/os/stix-v2.1-os.html
  */
@@ -11,49 +11,48 @@
  * Descriptions for common STIX properties that appear across all object types.
  */
 export const STIX_COMMON_PROPERTY_DESCRIPTIONS: Record<string, string> = {
-  "confidence": "The confidence property identifies the confidence that the creator has in the correctness of their data. The confidence value MUST be a number in the range of 0-100.",
-  "created": "The created property represents the time at which the object was originally created. The object creator can use the time it deems most appropriate as the time the object was created.",
-  "created_by_ref": "The created_by_ref property specifies the id property of the identity object that describes the entity that created this object. If this attribute is omitted, the source of this information is undefined.",
-  "defanged": "This property defines whether or not the data contained within the object has been defanged. The default value for this property is false.",
-  "extensions": "Specifies any extensions of the object, as a dictionary. Dictionary keys SHOULD be the id of a STIX Extension object or the name of a predefined object extension found in this specification, depending on the type of extension being used.",
-  "external_references": "The external_references property specifies a list of external references which refers to non-STIX information.",
-  "granular_markings": "The granular_markings property specifies a list of granular markings applied to this object. In some cases, though uncommon, marking definitions themselves may be marked with sharing or handling guidance.",
-  "id": "The id property uniquely identifies this object.",
-  "labels": "The labels property specifies a set of terms used to describe this object. The terms are user-defined or trust-group defined and their meaning is outside the scope of this specification and MAY be ignored.",
-  "lang": "The lang property identifies the language of the text content in this object. When present, it MUST be a language code conformant to [RFC5646].",
-  "modified": "The modified property is only used by STIX Objects that support versioning and represents the time that this particular version of the object was last modified. The object creator can use the time it deems most appropriate as the time this version of the object was modified.",
-  "object_marking_refs": "The object_marking_refs property specifies a list of id properties of marking-definition objects that apply to this object. In some cases, though uncommon, marking definitions themselves may be marked with sharing or handling guidance.",
-  "revoked": "The revoked property is only used by STIX Objects that support versioning and indicates whether the object has been revoked. Revoked objects are no longer considered valid by the object creator.",
-  "spec_version": "The version of the STIX specification used to represent this object. The value of this property MUST be 2.1 for STIX Objects defined according to this specification.",
-  "type": "The type property identifies the type of STIX Object." // Remove trailing comma from last item
+  "confidence": "How much the creator trusts that this object's information is accurate, scored 0–100. It's the source's own judgment, not a guarantee.",
+  "created": "When the object was first created. This stays fixed even if the object is updated later.",
+  "created_by_ref": "Points to the identity of whoever produced this object. Useful for deciding how much to trust it.",
+  "defanged": "Marks whether dangerous data (like a live malware URL) has been made safe to view — e.g. 'hxxp://' instead of 'http://'. Defaults to false.",
+  "extensions": "Extra, non-standard fields added on top of the base STIX spec.",
+  "external_references": "Links out to related non-STIX info, like a CVE ID, an ATT&CK technique, or a report URL.",
+  "granular_markings": "Applies handling/sharing rules (like TLP) to specific fields rather than the whole object.",
+  "id": "This object's unique identifier, formatted as type--UUID. Other objects use it to reference this one.",
+  "labels": "Free-form tags describing the object. Their meaning is defined by whoever uses them, not by the spec.",
+  "lang": "The language of the object's text content, as a standard code like 'en' or 'fr'.",
+  "modified": "When this version of the object was last changed. Pairs with 'created' to track updates over time.",
+  "object_marking_refs": "Applies handling/sharing rules (like TLP:RED) to the whole object by pointing to marking-definition objects.",
+  "revoked": "Flags that the object has been withdrawn and should no longer be trusted.",
+  "spec_version": "Which version of the STIX standard this object follows (2.1 here).",
+  "type": "What kind of STIX object this is (e.g. 'indicator', 'malware'). It's also the prefix of the id."
 };
-
 // ── STIX Object Type Descriptions ───────────────────────────────────────
 
 /**
  * High-level descriptions for each STIX object type.
  */
 export const STIX_OBJECT_DESCRIPTIONS: Record<string, string> = {
-  "attack-pattern": "Attack Patterns are a type of TTP that describe ways that adversaries attempt to compromise targets. Attack Patterns are used to help categorize attacks, generalize specific attacks to the patterns that they follow, and provide detailed information about how attacks are performed.",
-  "campaign": "A Campaign is a grouping of adversarial behaviors that describes a set of malicious activities or attacks (sometimes called waves) that occur over a period of time against a specific set of targets. Campaigns usually have well defined objectives and may be part of an Intrusion Set.",
-  "course-of-action": "Note: The Course of Action object in STIX 2.1 is a stub. It is included to support basic use cases (such as sharing prose courses of action) but does not support the ability to represent automated courses of action or contain properties to represent metadata about courses of action.",
-  "grouping": "A Grouping object explicitly asserts that the referenced STIX Objects have a shared context, unlike a STIX Bundle (which explicitly conveys no context). A Grouping object should not be confused with an intelligence product, which should be conveyed via a STIX Report.",
-  "identity": "Identities can represent actual individuals, organizations, or groups (e.g., ACME, Inc.) as well as classes of individuals, organizations, systems or groups (e.g., the finance sector). The Identity SDO can capture basic identifying information, contact information, and the sectors that the Identity belongs to.",
-  "indicator": "Indicators contain a pattern that can be used to detect suspicious or malicious cyber activity. For example, an Indicator may be used to represent a set of malicious domains and use the STIX Patterning Language (see section 9) to specify these domains.",
-  "infrastructure": "The Infrastructure SDO represents a type of TTP and describes any systems, software services and any associated physical or virtual resources intended to support some purpose (e.g., C2 servers used as part of an attack, device or server that are part of defense, database servers targeted by an attack, etc.).",
-  "intrusion-set": "An Intrusion Set is a grouped set of adversarial behaviors and resources with common properties that is believed to be orchestrated by a single organization. An Intrusion Set may capture multiple Campaigns or other activities that are all tied together by shared attributes indicating a commonly known or unknown Threat Actor.",
-  "location": "A Location represents a geographic location. The location may be described as any, some or all of the following: region (e.g., North America), civic address (e.g.",
-  "malware": "Malware is a type of TTP that represents malicious code. It generally refers to a program that is inserted into a system, usually covertly.",
-  "malware-analysis": "Malware Analysis captures the metadata and results of a particular static or dynamic analysis performed on a malware instance or family.",
-  "note": "A Note is intended to convey informative text to provide further context and/or to provide additional analysis not contained in the STIX Objects, Marking Definition objects, or Language Content objects which the Note relates to. Notes can be created by anyone (not just the original object creator).",
-  "observed-data": "Observed Data conveys information about cyber security related entities such as files, systems, and networks using the STIX Cyber-observable Objects (SCOs). For example, Observed Data can capture information about an IP address, a network connection, a file, or a registry key.",
-  "opinion": "An Opinion is an assessment of the correctness of the information in a STIX Object produced by a different entity. The primary property is the opinion property, which captures the level of agreement or disagreement using a fixed scale.",
-  "relationship": "The Relationship object is used to link together two SDOs or SCOs in order to describe how they are related to each other. If SDOs and SCOs are considered \"nodes\" or \"vertices\" in the graph, the Relationship Objects (SROs) represent \"edges\".",
-  "report": "Reports are collections of threat intelligence focused on one or more topics, such as a description of a threat actor, malware, or attack technique, including context and related details. They are used to group related threat intelligence together so that it can be published as a comprehensive cyber threat story.",
-  "sighting": "A Sighting denotes the belief that something in CTI (e.g., an indicator, malware, tool, threat actor, etc.) was seen. Sightings are used to track who and what are being targeted, how attacks are carried out, and to track trends in attack behavior.",
-  "threat-actor": "Threat Actors are actual individuals, groups, or organizations believed to be operating with malicious intent. A Threat Actor is not an Intrusion Set but may support or be affiliated with various Intrusion Sets, groups, or organizations over time.",
-  "tool": "Tools are legitimate software that can be used by threat actors to perform attacks. Knowing how and when threat actors use such tools can be important for understanding how campaigns are executed.",
-  "vulnerability": "A Vulnerability is a weakness or defect in the requirements, designs, or implementations of the computational logic (e.g., code) found in software and some hardware components (e.g., firmware) that can be directly exploited to negatively impact the confidentiality, integrity, or availability of that system. CVE is a list of information security vulnerabilities and exposures that provides common names for publicly known problems [CVE]."
+  "attack-pattern": "A type of TTP describing how adversaries try to compromise targets. It helps categorize attacks and generalize specific incidents into the patterns they follow.",
+  "campaign": "A set of malicious activities or attacks carried out over a period of time against specific targets. Campaigns have defined objectives and may be part of a larger Intrusion Set.",
+  "course-of-action": "A recommended action or response to a threat, such as remediation or mitigation steps. In STIX 2.1 this is a stub, so it mainly holds prose rather than automated actions.",
+  "grouping": "Asserts that a set of STIX Objects share some context, like an ongoing investigation. Unlike a Bundle, which conveys no context, a Grouping says these objects belong together.",
+  "identity": "Represents an individual, organization, group, or class of them (e.g. the finance sector). It can hold names, contact info, and the sectors the entity belongs to.",
+  "indicator": "Contains a pattern used to detect suspicious or malicious activity, such as a set of malicious domains. The pattern is written in the STIX Patterning Language or a tool format like SNORT or YARA.",
+  "infrastructure": "Systems, services, or resources that support an activity, like C2 servers, defensive tools, or targeted databases. A type of TTP.",
+  "intrusion-set": "A set of adversarial behaviors and resources believed to be run by a single organization. It can tie together multiple Campaigns linked to a common, known or unknown, Threat Actor.",
+  "location": "A geographic place, described by region, country, address, or coordinates. Other objects can reference it to show where activity happened.",
+  "malware": "Malicious code inserted into a system, usually covertly. A type of TTP that can represent a single instance or a whole malware family.",
+  "malware-analysis": "Captures the metadata and results of a static or dynamic analysis run against a malware sample or family.",
+  "note": "Adds informative text or extra analysis to other STIX Objects. Anyone can create a Note, not just the original object's creator.",
+  "observed-data": "Raw facts about cyber entities like files, systems, or network connections, expressed using Cyber-observable Objects (SCOs). For example, an observed IP address or registry key.",
+  "opinion": "One entity's assessment of whether another object's information is correct, on a fixed agree/disagree scale. Used to capture second opinions on shared intelligence.",
+  "relationship": "Links two objects to describe how they relate, acting as the edges between nodes in the STIX graph. For example, malware that 'targets' an identity.",
+  "report": "A collection of threat intelligence about one or more topics, like a threat actor or attack technique. Groups related objects so they can be published as one coherent story.",
+  "sighting": "Records the belief that something (an indicator, malware, threat actor, etc.) was actually seen. Used to track what is being targeted and to spot trends.",
+  "threat-actor": "An individual, group, or organization believed to act with malicious intent. Distinct from an Intrusion Set, though an actor may support or run one.",
+  "tool": "Legitimate software that threat actors can use to carry out attacks, like a remote access or scanning utility. Knowing how and when these are used aids defense.",
+  "vulnerability": "A weakness or defect in software or hardware that can be exploited to harm a system's confidentiality, integrity, or availability. Often identified by a CVE number."
 };
 
 // ── Object-Specific Property Descriptions ───────────────────────────────
@@ -64,204 +63,204 @@ export const STIX_OBJECT_DESCRIPTIONS: Record<string, string> = {
  */
 export const STIX_OBJECT_PROPERTIES: Record<string, Record<string, string>> = {
   "attack-pattern": {
-    "aliases": "Alternative names used to identify this Attack Pattern.",
-    "description": "A description that provides more details and context about the Attack Pattern, potentially including its purpose and its key characteristics.",
-    "kill_chain_phases": "The list of Kill Chain Phases for which this Attack Pattern is used.",
-    "name": "A name used to identify the Attack Pattern.",
-    "type": "The value of this property MUST be attack-pattern."
+    "aliases": "Other names this Attack Pattern is known by.",
+    "description": "A free-text explanation of the Attack Pattern, including its purpose and key characteristics.",
+    "kill_chain_phases": "The kill chain phase(s) where this Attack Pattern is used, showing where in an attack it fits.",
+    "name": "A short name identifying the Attack Pattern.",
+    "type": "Identifies the object as an Attack Pattern. Always set to 'attack-pattern'."
   },
   "campaign": {
-    "aliases": "Alternative names used to identify this Campaign",
-    "description": "A description that provides more details and context about the Campaign, potentially including its purpose and its key characteristics.",
-    "first_seen": "The time that this Campaign was first seen. A summary property of data from sightings and other data that may or may not be available in STIX.",
-    "last_seen": "The time that this Campaign was last seen. A summary property of data from sightings and other data that may or may not be available in STIX.",
-    "name": "A name used to identify the Campaign.",
-    "objective": "The Campaigns primary goal, objective, desired outcome, or intended effect  what the Threat Actor or Intrusion Set hopes to accomplish with this Campaign.",
-    "type": "The value of this property MUST be campaign."
+    "aliases": "Other names this Campaign is known by.",
+    "description": "A free-text explanation of the Campaign, including its purpose and key characteristics.",
+    "first_seen": "When this Campaign was first seen. Summarized from sightings and other data.",
+    "last_seen": "When this Campaign was last seen. Summarized from sightings and other data.",
+    "name": "A short name identifying the Campaign.",
+    "objective": "The Campaign's main goal or intended outcome, what the attacker hopes to achieve.",
+    "type": "Identifies the object as a Campaign. Always set to 'campaign'."
   },
   "course-of-action": {
-    "action (reserved)": "RESERVED  To capture structured/automated courses of action.",
-    "description": "A description that provides more details and context about the Course of Action, potentially including its purpose and its key characteristics.",
-    "name": "A name used to identify the Course of Action.",
-    "type": "The value of this property MUST be course-of-action."
+    "action (reserved)": "Reserved for future use to capture structured or automated actions. Not usable in STIX 2.1.",
+    "description": "A free-text explanation of the Course of Action, including its purpose and key characteristics.",
+    "name": "A short name identifying the Course of Action.",
+    "type": "Identifies the object as a Course of Action. Always set to 'course-of-action'."
   },
   "grouping": {
-    "context": "A short descriptor of the particular context shared by the content referenced by the Grouping.",
-    "description": "A description that provides more details and context about the Grouping, potentially including its purpose and its key characteristics.",
-    "name": "A name used to identify the Grouping.",
-    "object_refs": "Specifies the STIX Objects that are referred to by this Grouping.",
-    "type": "The value of this property MUST be grouping."
+    "context": "A short label for the shared context that ties the grouped objects together.",
+    "description": "A free-text explanation of the Grouping, including its purpose and key characteristics.",
+    "name": "A short name identifying the Grouping.",
+    "object_refs": "The list of STIX Objects that belong to this Grouping.",
+    "type": "Identifies the object as a Grouping. Always set to 'grouping'."
   },
   "identity": {
-    "contact_information": "The contact information (e-mail, phone number, etc.) for this Identity.",
-    "description": "A description that provides more details and context about the Identity, potentially including its purpose and its key characteristics.",
-    "identity_class": "The type of entity that this Identity describes, e.g., an individual or organization.",
+    "contact_information": "Contact details for this Identity, such as an email address or phone number.",
+    "description": "A free-text explanation of the Identity, including its purpose and key characteristics.",
+    "identity_class": "The kind of entity described, such as an individual, group, or organization.",
     "name": "The name of this Identity.",
-    "roles": "The list of roles that this Identity performs (e.g., CEO, Domain Administrators, Doctors, Hospital, or Retailer).",
-    "sectors": "The list of industry sectors that this Identity belongs to.",
-    "type": "The value of this property MUST be identity."
+    "roles": "The roles this Identity performs, such as CEO, domain admin, or retailer.",
+    "sectors": "The industry sectors this Identity belongs to, such as finance or healthcare.",
+    "type": "Identifies the object as an Identity. Always set to 'identity'."
   },
   "indicator": {
-    "description": "A description that provides more details and context about the Indicator, potentially including its purpose and its key characteristics.",
-    "indicator_types": "A set of categorizations for this indicator.",
-    "kill_chain_phases": "The kill chain phase(s) to which this Indicator corresponds.",
-    "name": "A name used to identify the Indicator.",
-    "pattern": "The detection pattern for this Indicator MAY be expressed as a STIX Pattern as specified in section 9 or another appropriate language such as SNORT, YARA, etc.",
-    "pattern_type": "The pattern language used in this indicator. The value for this property SHOULD come from the pattern-type-ov open vocabulary.",
-    "pattern_version": "The version of the pattern language that is used for the data in the pattern property which MUST match the type of pattern data included in the pattern property. For patterns that do not have a formal specification, the build or code version that the pattern is known to work with SHOULD be used.",
-    "type": "The value of this property MUST be indicator.",
-    "valid_from": "The time from which this Indicator is considered a valid indicator of the behaviors it is related or represents.",
-    "valid_until": "The time at which this Indicator should no longer be considered a valid indicator of the behaviors it is related to or represents. If the valid_until property is omitted, then there is no constraint on the latest time for which the Indicator is valid."
+    "description": "A free-text explanation of the Indicator, including its purpose and key characteristics.",
+    "indicator_types": "Categories that describe what kind of indicator this is, such as 'malicious-activity'.",
+    "kill_chain_phases": "The kill chain phase(s) this Indicator relates to, showing where in an attack it applies.",
+    "name": "A short name identifying the Indicator.",
+    "pattern": "The detection logic itself, written in the STIX Patterning Language or a tool format like SNORT or YARA.",
+    "pattern_type": "The pattern language used, such as 'stix', 'snort', or 'yara'.",
+    "pattern_version": "The version of the pattern language used, matching the data in the pattern property.",
+    "type": "Identifies the object as an Indicator. Always set to 'indicator'.",
+    "valid_from": "The time from which this Indicator should be considered valid.",
+    "valid_until": "The time after which this Indicator is no longer valid. If omitted, there is no end limit."
   },
   "infrastructure": {
-    "aliases": "Alternative names used to identify this Infrastructure.",
-    "description": "A description that provides more details and context about the Infrastructure, potentially including its purpose, how it is being used, how it relates to other intelligence activities captured in related objects, and its key characteristics.",
-    "first_seen": "The time that this Infrastructure was first seen performing malicious activities.",
-    "infrastructure_types": "The type of infrastructure being described.",
-    "kill_chain_phases": "The list of Kill Chain Phases for which this Infrastructure is used.",
-    "last_seen": "The time that this Infrastructure was last seen performing malicious activities.",
-    "name": "A name or characterizing text used to identify the Infrastructure.",
-    "type": "The value of this property MUST be infrastructure."
+    "aliases": "Other names this Infrastructure is known by.",
+    "description": "A free-text explanation of the Infrastructure, including its purpose and how it is used.",
+    "first_seen": "When this Infrastructure was first seen being used.",
+    "infrastructure_types": "The kind of infrastructure described, such as 'command-and-control' or 'hosting'.",
+    "kill_chain_phases": "The kill chain phase(s) where this Infrastructure is used.",
+    "last_seen": "When this Infrastructure was last seen being used.",
+    "name": "A short name or label identifying the Infrastructure.",
+    "type": "Identifies the object as Infrastructure. Always set to 'infrastructure'."
   },
   "intrusion-set": {
-    "aliases": "Alternative names used to identify this Intrusion Set.",
-    "description": "A description that provides more details and context about the Intrusion Set, potentially including its purpose and its key characteristics.",
-    "first_seen": "The time that this Intrusion Set was first seen. A summary property of data from sightings and other data that may or may not be available in STIX.",
-    "goals": "The high-level goals of this Intrusion Set, namely, what are they trying to do. For example, they may be motivated by personal gain, but their goal is to steal credit card numbers.",
-    "last_seen": "The time that this Intrusion Set was last seen. This property is a summary property of data from sightings and other data that may or may not be available in STIX.",
-    "name": "A name used to identify this Intrusion Set.",
-    "primary_motivation": "The primary reason, motivation, or purpose behind this Intrusion Set. The motivation is why the Intrusion Set wishes to achieve the goal (what they are trying to achieve).",
-    "resource_level": "This property specifies the organizational level at which this Intrusion Set typically works, which in turn determines the resources available to this Intrusion Set for use in an attack.",
-    "secondary_motivations": "The secondary reasons, motivations, or purposes behind this Intrusion Set. These motivations can exist as an equal or near-equal cause to the primary motivation.",
-    "type": "The value of this property MUST be intrusion-set."
+    "aliases": "Other names this Intrusion Set is known by.",
+    "description": "A free-text explanation of the Intrusion Set, including its purpose and key characteristics.",
+    "first_seen": "When this Intrusion Set was first seen. Summarized from sightings and other data.",
+    "goals": "What this Intrusion Set is trying to achieve, such as stealing credit card numbers.",
+    "last_seen": "When this Intrusion Set was last seen. Summarized from sightings and other data.",
+    "name": "A short name identifying this Intrusion Set.",
+    "primary_motivation": "The main reason behind this Intrusion Set's activity, such as financial gain or espionage.",
+    "resource_level": "The organizational level the group works at, which reflects the resources available to it.",
+    "secondary_motivations": "Other reasons driving this Intrusion Set, roughly as important as the primary one.",
+    "type": "Identifies the object as an Intrusion Set. Always set to 'intrusion-set'."
   },
   "location": {
-    "administrative_area": "The state, province, or other sub-national administrative area that this Location describes.",
-    "city": "The city that this Location describes.",
-    "country": "The country that this Location describes.",
-    "description": "A textual description of the Location.",
-    "latitude": "The latitude of the Location in decimal degrees. Positive numbers describe latitudes north of the equator, and negative numbers describe latitudes south of the equator.",
-    "longitude": "The longitude of the Location in decimal degrees. Positive numbers describe longitudes east of the prime meridian and negative numbers describe longitudes west of the prime meridian.",
-    "name": "A name used to identify the Location.",
-    "postal_code": "The postal code for this Location.",
-    "precision": "Defines the precision of the coordinates specified by the latitude and longitude properties. This is measured in meters.",
-    "region": "The region that this Location describes.",
-    "street_address": "The street address that this Location describes. This property includes all aspects or parts of the street address.",
-    "type": "The value of this property MUST be location."
+    "administrative_area": "The state, province, or similar sub-national area this Location describes.",
+    "city": "The city this Location describes.",
+    "country": "The country this Location describes, ideally as a two-letter code.",
+    "description": "A free-text explanation of the Location.",
+    "latitude": "The north-south coordinate in decimal degrees. Positive is north of the equator, negative is south.",
+    "longitude": "The east-west coordinate in decimal degrees. Positive is east of the prime meridian, negative is west.",
+    "name": "A short name identifying the Location.",
+    "postal_code": "The postal or ZIP code for this Location.",
+    "precision": "How precise the latitude and longitude are, measured in meters.",
+    "region": "The broad world region this Location describes, such as 'northern-america'.",
+    "street_address": "The full street address for this Location.",
+    "type": "Identifies the object as a Location. Always set to 'location'."
   },
   "malware": {
-    "aliases": "Alternative names used to identify this malware or malware family.",
-    "architecture_execution_envs": "The processor architectures (e.g., x86, ARM, etc.) that the malware instance or family is executable on.",
-    "capabilities": "Any of the capabilities identified for the malware instance or family.",
-    "description": "A description that provides more details and context about the malware instance or family, potentially including its purpose and its key characteristics.",
-    "first_seen": "The time that the malware instance or family was first seen. This property is a summary property of data from sightings and other data that may or may not be available in STIX.",
-    "implementation_languages": "The programming language(s) used to implement the malware instance or family.",
-    "is_family": "Whether the object represents a malware family (if true) or a malware instance (if false).",
-    "kill_chain_phases": "The list of Kill Chain Phases for which this malware can be used.",
-    "last_seen": "The time that the malware family or malware instance was last seen. This property is a summary property of data from sightings and other data that may or may not be available in STIX.",
-    "malware_types": "A set of categorizations for the malware being described.",
-    "name": "A name used to identify the malware instance or family, as specified by the producer of the SDO. For a malware family the name MUST be defined.",
-    "operating_system_refs": "The operating systems that the malware family or malware instance is executable on. This applies to virtualized operating systems as well as those running on bare metal.",
-    "sample_refs": "The sample_refs property specifies a list of identifiers of the SCO file or artifact objects associated with this malware instance(s) or family.",
-    "type": "The value of this property MUST be malware."
+    "aliases": "Other names this malware or malware family is known by.",
+    "architecture_execution_envs": "The processor architectures the malware runs on, such as x86 or ARM.",
+    "capabilities": "The things this malware is able to do, such as stealing credentials or spreading itself.",
+    "description": "A free-text explanation of the malware, including its purpose and key characteristics.",
+    "first_seen": "When this malware was first seen. Summarized from sightings and other data.",
+    "implementation_languages": "The programming languages used to build the malware, such as C or Python.",
+    "is_family": "True if this object describes a malware family, false if it describes a single instance.",
+    "kill_chain_phases": "The kill chain phase(s) where this malware can be used.",
+    "last_seen": "When this malware was last seen. Summarized from sightings and other data.",
+    "malware_types": "Categories that describe the kind of malware, such as 'ransomware' or 'trojan'.",
+    "name": "A name identifying the malware or family. Required for a malware family.",
+    "operating_system_refs": "References to the operating systems the malware can run on.",
+    "sample_refs": "References to the actual file or artifact objects that are samples of this malware.",
+    "type": "Identifies the object as Malware. Always set to 'malware'."
   },
   "malware-analysis": {
-    "analysis_definition_version": "The version of the analysis definitions used by the analysis tool (including AV tools).",
-    "analysis_ended": "The date and time that the malware analysis ended.",
-    "analysis_engine_version": "The version of the analysis engine or product (including AV engines) that was used to perform the analysis.",
-    "analysis_sco_refs": "This property contains the references to the STIX Cyber-observable Objects that were captured during the analysis process.",
-    "analysis_started": "The date and time that the malware analysis was initiated.",
-    "configuration_version": "The named configuration of additional product configuration parameters for this analysis run. For example, when a product is configured to do full depth analysis of Window PE files.",
-    "host_vm_ref": "A description of the virtual machine environment used to host the guest operating system (if applicable) that was used for the dynamic analysis of the malware instance or family. If this value is not included in conjunction with the operating_system_ref property, this means that the dynamic analysis may have been performed on bare metal (i.e.",
-    "installed_software_refs": "Any non-standard software installed on the operating system (specified through the operating-system value) used for the dynamic analysis of the malware instance or family.",
-    "operating_system_ref": "The operating system used for the dynamic analysis of the malware instance or family. This applies to virtualized operating systems as well as those running on bare metal.",
-    "product": "The name of the analysis engine or product that was used. Product names SHOULD be all lowercase with words separated by a dash \"-\".",
-    "result": "The classification result as determined by the scanner or tool analysis process.",
-    "result_name": "The classification result or name assigned to the malware instance by the scanner tool.",
-    "sample_ref": "This property contains the reference to the SCO file, network traffic or artifact object that this malware analysis was performed against. Caution should be observed when creating an SRO between Malware and Malware Analysis objects when the Malware sample_refs property does not contain the SCO that is included in the Malware Analysis sample_ref property.",
-    "submitted": "The date and time that the malware was first submitted for scanning or analysis. This value will stay constant while the scanned date can change.",
-    "type": "The value of this property MUST be malware-analysis.",
-    "version": "The version of the analysis product that was used to perform the analysis."
+    "analysis_definition_version": "The version of the analysis definitions used, such as an AV signature set.",
+    "analysis_ended": "When the analysis finished.",
+    "analysis_engine_version": "The version of the analysis engine or product used.",
+    "analysis_sco_refs": "References to the observable objects captured during the analysis.",
+    "analysis_started": "When the analysis began.",
+    "configuration_version": "The named configuration of extra settings used for this analysis run.",
+    "host_vm_ref": "The virtual machine environment used to host the OS for dynamic analysis, if any.",
+    "installed_software_refs": "Any non-standard software installed in the analysis environment.",
+    "operating_system_ref": "The operating system used for the dynamic analysis.",
+    "product": "The name of the analysis engine or product used, in lowercase with dashes.",
+    "result": "The overall classification reached by the analysis, such as 'malicious' or 'benign'.",
+    "result_name": "The specific name or label the tool assigned to the malware.",
+    "sample_ref": "A reference to the file, network traffic, or artifact the analysis was run against.",
+    "submitted": "When the malware was first submitted for analysis. Stays fixed even if it is rescanned later.",
+    "type": "Identifies the object as a Malware Analysis. Always set to 'malware-analysis'.",
+    "version": "The version of the analysis product used."
   },
   "note": {
-    "abstract": "A brief summary of the note content.",
-    "authors": "The name of the author(s) of this note (e.g., the analyst(s) that created it).",
-    "content": "The content of the note.",
-    "object_refs": "The STIX Objects that the note is being applied to.",
-    "type": "The value of this property MUST be note"
+    "abstract": "A brief summary of the note's content.",
+    "authors": "The name(s) of whoever wrote the note, such as the analyst who created it.",
+    "content": "The main text of the note.",
+    "object_refs": "The STIX Objects this note is attached to.",
+    "type": "Identifies the object as a Note. Always set to 'note'."
   },
   "observed-data": {
-    "first_observed": "The beginning of the time window during which the data was seen.",
+    "first_observed": "The start of the time window during which the data was seen.",
     "last_observed": "The end of the time window during which the data was seen.",
-    "number_observed": "The number of times that each Cyber-observable object represented in the objects or object_ref property was seen. If present, this MUST be an integer between 1 and 999,999,999 inclusive.",
-    "object_refs": "A list of SCOs and SROs representing the observation. The object_refs MUST contain at least one SCO reference if defined.",
-    "objects (optional - deprecated)": "A dictionary of SCO representing the observation. The dictionary MUST contain at least one object.",
-    "type": "The value of this property MUST be observed-data."
+    "number_observed": "How many times the observed data was seen, between 1 and 999,999,999.",
+    "object_refs": "References to the observable objects (SCOs) that make up this observation.",
+    "objects (optional - deprecated)": "A dictionary of the observed objects. Deprecated, use object_refs instead.",
+    "type": "Identifies the object as Observed Data. Always set to 'observed-data'."
   },
   "opinion": {
-    "authors": "The name of the author(s) of this Opinion (e.g., the analyst(s) that created it).",
-    "explanation": "An explanation of why the producer has this Opinion.",
-    "object_refs": "The STIX Objects that the Opinion is being applied to.",
-    "opinion": "The opinion that the producer has about all of the STIX Object(s) listed in the object_refs property.",
-    "type": "The value of this property MUST be opinion"
+    "authors": "The name(s) of whoever produced this Opinion, such as the analyst who created it.",
+    "explanation": "Why the producer holds this Opinion.",
+    "object_refs": "The STIX Objects this Opinion is about.",
+    "opinion": "The level of agreement or disagreement, on a fixed scale from 'strongly-disagree' to 'strongly-agree'.",
+    "type": "Identifies the object as an Opinion. Always set to 'opinion'."
   },
   "relationship": {
-    "description": "A description that provides more details and context about the Relationship, potentially including its purpose and its key characteristics.",
-    "relationship_type": "The name used to identify the type of Relationship. This value SHOULD be an exact value listed in the relationships for the source and target SDO, but MAY be any string.",
-    "source_ref": "The id of the source (from) object.",
-    "start_time": "This optional timestamp represents the earliest time at which the Relationship between the objects exists. If this property is a future timestamp, at the time the start_time property is defined, then this represents an estimate by the producer of the intelligence of the earliest time at which relationship will be asserted to be true.",
-    "stop_time": "The latest time at which the Relationship between the objects exists. If this property is a future timestamp, at the time the stop_time property is defined, then this represents an estimate by the producer of the intelligence of the latest time at which relationship will be asserted to be true.",
-    "target_ref": "The id of the target (to) object.",
-    "type": "The value of this property MUST be relationship."
+    "description": "A free-text explanation of the Relationship, including its purpose and key characteristics.",
+    "relationship_type": "The kind of link between the two objects, such as 'uses', 'targets', or 'indicates'.",
+    "source_ref": "The id of the object the relationship points from.",
+    "start_time": "The earliest time the relationship is considered true. A future time is the producer's estimate.",
+    "stop_time": "The latest time the relationship is considered true. A future time is the producer's estimate.",
+    "target_ref": "The id of the object the relationship points to.",
+    "type": "Identifies the object as a Relationship. Always set to 'relationship'."
   },
   "report": {
-    "description": "A description that provides more details and context about the Report, potentially including its purpose and its key characteristics.",
-    "name": "A name used to identify the Report.",
-    "object_refs": "Specifies the STIX Objects that are referred to by this Report.",
-    "published": "The date that this Report object was officially published by the creator of this report.",
-    "report_types": "The primary type(s) of content found in this report.",
-    "type": "The value of this property MUST be report."
+    "description": "A free-text explanation of the Report, including its purpose and key characteristics.",
+    "name": "A short name identifying the Report.",
+    "object_refs": "The STIX Objects included in this Report.",
+    "published": "The date this Report was officially published.",
+    "report_types": "The main kind(s) of content in the report, such as 'threat-actor' or 'campaign'.",
+    "type": "Identifies the object as a Report. Always set to 'report'."
   },
   "sighting": {
-    "count": "If present, this MUST be an integer between 0 and 999,999,999 inclusive and represents the number of times the SDO referenced by the sighting_of_ref property was sighted. Observed Data has a similar property called number_observed, which refers to the number of times the data was observed.",
-    "description": "A description that provides more details and context about the Sighting.",
-    "first_seen": "The beginning of the time window during which the SDO referenced by the sighting_of_ref property was sighted.",
-    "last_seen": "The end of the time window during which the SDO referenced by the sighting_of_ref property was sighted.",
-    "observed_data_refs": "A list of ID references to the Observed Data objects that contain the raw cyber data for this Sighting. For example, a Sighting of an Indicator with an IP address could include the Observed Data for the network connection that the Indicator was used to detect.",
-    "sighting_of_ref": "An ID reference to the SDO that was sighted (e.g., Indicator or Malware). For example, if this is a Sighting of an Indicator, that Indicators ID would be the value of this property.",
-    "summary": "The summary property indicates whether the Sighting should be considered summary data. Summary data is an aggregation of previous Sightings reports and should not be considered primary source data.",
-    "type": "The value of this property MUST be sighting.",
-    "where_sighted_refs": "A list of ID references to the Identity or Location objects describing the entities or types of entities that saw the sighting. Omitting the where_sighted_refs property does not imply that the sighting was seen by the object creator."
+    "count": "How many times the referenced object was sighted, between 0 and 999,999,999.",
+    "description": "A free-text explanation of the Sighting.",
+    "first_seen": "The start of the time window during which the object was sighted.",
+    "last_seen": "The end of the time window during which the object was sighted.",
+    "observed_data_refs": "References to the Observed Data objects holding the raw evidence for this Sighting.",
+    "sighting_of_ref": "A reference to the object that was sighted, such as an Indicator or Malware.",
+    "summary": "True if this Sighting is aggregated from other reports rather than primary source data.",
+    "type": "Identifies the object as a Sighting. Always set to 'sighting'.",
+    "where_sighted_refs": "References to the Identity or Location objects that saw the sighting."
   },
   "threat-actor": {
-    "aliases": "A list of other names that this Threat Actor is believed to use.",
-    "description": "A description that provides more details and context about the Threat Actor, potentially including its purpose and its key characteristics.",
-    "first_seen": "The time that this Threat Actor was first seen. This property is a summary property of data from sightings and other data that may or may not be available in STIX.",
-    "goals": "The high-level goals of this Threat Actor, namely, what are they trying to do. For example, they may be motivated by personal gain, but their goal is to steal credit card numbers.",
-    "last_seen": "The time that this Threat Actor was last seen. This property is a summary property of data from sightings and other data that may or may not be available in STIX.",
-    "name": "A name used to identify this Threat Actor or Threat Actor group.",
-    "personal_motivations": "The personal reasons, motivations, or purposes of the Threat Actor regardless of organizational goals. Personal motivation, which is independent of the organizations goals, describes what impels an individual to carry out an attack.",
-    "primary_motivation": "The primary reason, motivation, or purpose behind this Threat Actor. The motivation is why the Threat Actor wishes to achieve the goal (what they are trying to achieve).",
-    "resource_level": "The organizational level at which this Threat Actor typically works, which in turn determines the resources available to this Threat Actor for use in an attack. This attribute is linked to the sophistication property  a specific resource level implies that the Threat Actor has access to at least a specific sophistication level.",
-    "roles": "A list of roles the Threat Actor plays.",
-    "secondary_motivations": "This property specifies the secondary reasons, motivations, or purposes behind this Threat Actor. These motivations can exist as an equal or near-equal cause to the primary motivation.",
-    "sophistication": "The skill, specific knowledge, special training, or expertise a Threat Actor must have to perform the attack.",
-    "threat_actor_types": "The type(s) of this threat actor.",
-    "type": "The value of this property MUST be threat-actor."
+    "aliases": "Other names this Threat Actor is believed to use.",
+    "description": "A free-text explanation of the Threat Actor, including its purpose and key characteristics.",
+    "first_seen": "When this Threat Actor was first seen. Summarized from sightings and other data.",
+    "goals": "What this Threat Actor is trying to achieve, such as stealing credit card numbers.",
+    "last_seen": "When this Threat Actor was last seen. Summarized from sightings and other data.",
+    "name": "A name identifying this Threat Actor or group.",
+    "personal_motivations": "The individual's own reasons for attacking, separate from any organizational goals.",
+    "primary_motivation": "The main reason behind this Threat Actor's activity, such as financial gain or ideology.",
+    "resource_level": "The organizational level the actor works at, which reflects the resources available to them.",
+    "roles": "The roles this Threat Actor plays, such as 'malware-author' or 'director'.",
+    "secondary_motivations": "Other reasons driving this Threat Actor, roughly as important as the primary one.",
+    "sophistication": "The skill or expertise the Threat Actor needs to carry out their attacks.",
+    "threat_actor_types": "Categories describing the kind of threat actor, such as 'nation-state' or 'hacktivist'.",
+    "type": "Identifies the object as a Threat Actor. Always set to 'threat-actor'."
   },
   "tool": {
-    "aliases": "Alternative names used to identify this Tool.",
-    "description": "A description that provides more details and context about the Tool, potentially including its purpose and its key characteristics.",
-    "kill_chain_phases": "The list of kill chain phases for which this Tool can be used.",
-    "name": "The name used to identify the Tool.",
-    "tool_types": "The kind(s) of tool(s) being described.",
-    "tool_version": "The version identifier associated with the Tool.",
-    "type": "The value of this property MUST be tool."
+    "aliases": "Other names this Tool is known by.",
+    "description": "A free-text explanation of the Tool, including its purpose and key characteristics.",
+    "kill_chain_phases": "The kill chain phase(s) where this Tool can be used.",
+    "name": "A short name identifying the Tool.",
+    "tool_types": "Categories describing the kind of tool, such as 'remote-access' or 'vulnerability-scanning'.",
+    "tool_version": "The version identifier of the Tool.",
+    "type": "Identifies the object as a Tool. Always set to 'tool'."
   },
   "vulnerability": {
-    "description": "A description that provides more details and context about the Vulnerability, potentially including its purpose and its key characteristics.",
-    "name": "A name used to identify the Vulnerability.",
-    "type": "The value of this property MUST be vulnerability."
+    "description": "A free-text explanation of the Vulnerability, including its key characteristics.",
+    "name": "A name identifying the Vulnerability, often a CVE ID.",
+    "type": "Identifies the object as a Vulnerability. Always set to 'vulnerability'."
   }
 };
 
@@ -272,37 +271,116 @@ export const STIX_OBJECT_PROPERTIES: Record<string, Record<string, string>> = {
  * Format: { relationshipType: description }
  */
 export const STIX_RELATIONSHIP_DESCRIPTIONS: Record<string, string> = {
-  "attributed-to": "This Relationship describes that the Intrusion Set or Threat Actor that is involved in carrying out the Campaign.",
-  "authored-by": "This Relationship describes that the malware instance or family was developed by the related threat actor or intrusion set.",
-  "based-on": "This relationship describes that the indicator was created based on information from an observed-data object.",
-  "beacons-to, exfiltrates-to": "This Relationship describes that the malware instance or family beacons to or exfiltrates data to the related Infrastructure.",
-  "communicates-with": "This Relationship documents that this infrastructure instance communicates with the defined network addressable resource.",
-  "compromises": "This Relationship describes that the Campaign compromises the related Infrastructure.",
-  "consists-of": "This Relationship documents the objects that are used to make up an infrastructure instance, such as ipv4-addr, ipv6-addr, domain-name, url.",
-  "controls": "This Relationship describes that this infrastructure controls some other infrastructure or a malware instance (or family).",
-  "delivers": "This Relationship describes that this Attack Pattern is used to deliver this malware instance (or family).",
-  "downloads, drops": "These Relationships document that this malware instance (or family) downloads or drops another malware instance, tool or file.",
-  "drops": "This Relationship documents that this Tool drops a malware instance (or family).",
-  "exploits": "This Relationship documents that this malware instance or family exploits or attempts to exploit a particular vulnerability.",
-  "has": "This Relationship describes that this specific Infrastructure has this specific Vulnerability.",
-  "hosts": "This Relationship describes that this infrastructure has a tool running on it or is used to passively host the tool / malware.",
-  "hosts, owns": "This Relationship describes that the Intrusion Set hosts or owns the related Infrastructure (e.g.",
-  "impersonates": "This Relationship describes that the Threat Actor impersonates the related Identity.",
-  "investigates": "This Relationship describes that the Course of Action can be used to investigate the Indicator.",
-  "located-at": "This Relationship describes that the Identity is located at or in the related Location.",
-  "originates-from": "This Relationship describes that the Campaign originates from the related Location.",
-  "remediates": "This Relationship describes that the Course of Action can be used to remediate (e.g.",
-  "targets": "This Relationship describes that this Attack Pattern typically targets the type of victim, location, or vulnerability represented by the related Identity, Location, or Vulnerability object.",
-  "uses": "This Relationship describes that the related Malware or Tool is used to perform the behavior identified in the Attack Pattern.",
-  "variant-of": "This Relationship is used to document that one malware instance or family is a variant of another malware instance or family."
+  "attributed-to": "Links a Campaign to the Intrusion Set or Threat Actor carrying it out.",
+  "authored-by": "Says the malware was written by the related Threat Actor or Intrusion Set.",
+  "based-on": "Says the Indicator was created from information in an Observed Data object.",
+  "beacons-to, exfiltrates-to": "Says the malware beacons to or sends stolen data to the related Infrastructure.",
+  "communicates-with": "Says this infrastructure talks to the given network resource, such as an IP or domain.",
+  "compromises": "Says the Campaign has compromised the related Infrastructure.",
+  "consists-of": "Lists the objects that make up an infrastructure, such as IPs, domains, or URLs.",
+  "controls": "Says this infrastructure controls other infrastructure or a piece of malware.",
+  "delivers": "Says this Attack Pattern is used to deliver the malware.",
+  "downloads, drops": "Says this malware downloads or drops another piece of malware, a tool, or a file.",
+  "drops": "Says this Tool drops a piece of malware.",
+  "exploits": "Says this malware exploits, or tries to exploit, a particular Vulnerability.",
+  "has": "Says this Infrastructure has the related Vulnerability.",
+  "hosts": "Says this infrastructure runs or passively hosts the related tool or malware.",
+  "hosts, owns": "Says the Intrusion Set hosts or owns the related Infrastructure.",
+  "impersonates": "Says the Threat Actor pretends to be the related Identity.",
+  "investigates": "Says the Course of Action can be used to investigate the Indicator.",
+  "located-at": "Says the Identity is located at the related Location.",
+  "originates-from": "Says the Campaign originates from the related Location.",
+  "remediates": "Says the Course of Action can be used to fix or mitigate the threat.",
+  "targets": "Says this Attack Pattern targets the related Identity, Location, or Vulnerability.",
+  "uses": "Says the related Malware or Tool is used to carry out the Attack Pattern's behavior.",
+  "variant-of": "Says one piece of malware is a variant of another."
 };
+
+// ── MITRE ATT&CK Custom Properties ──────────────────────────────────────
+
+/*
+ * Descriptions for MITRE's custom x_mitre_* properties.
+ * These are not part of the core STIX spec. MITRE adds them on top of
+ * standard STIX objects to carry ATT&CK-specific data.
+ *
+ * Note: the ATT&CK ID (T1059, G0016, S0331, etc.) is NOT a property. It
+ * lives in external_references where source_name is "mitre-attack".
+ */
+export const MITRE_ATTACK_PROPERTIES: Record<string, string> = {
+  // Common across most ATT&CK objects
+  "x_mitre_version": "The version of this specific ATT&CK object, bumped when its content changes, such as '1.2'.",
+  "x_mitre_attack_spec_version": "The version of the ATT&CK data specification this object follows, such as '3.2.0'. Lets tools check compatibility.",
+  "x_mitre_domains": "Which ATT&CK matrices this object belongs to, such as 'enterprise-attack', 'mobile-attack', or 'ics-attack'.",
+  "x_mitre_modified_by_ref": "Points to the identity that last edited this object. For official data this is MITRE's own identity.",
+  "x_mitre_deprecated": "True if the object should no longer be used and has no direct replacement. Differs from 'revoked', which does have a replacement.",
+  "x_mitre_contributors": "The people or organizations who contributed the information in this object.",
+  "x_mitre_platforms": "The platforms this object applies to, such as Windows, Linux, macOS, or a cloud service.",
+
+  // Technique and sub-technique (attack-pattern)
+  "x_mitre_detection": "Guidance on how to spot this technique, such as which logs, events, or behaviors to watch.",
+  "x_mitre_is_subtechnique": "True if this is a sub-technique (a child of a broader technique), false if it is a top-level technique.",
+  "x_mitre_data_sources": "Older list of data sources useful for detecting this technique. Newer data uses Data Component 'detects' relationships instead.",
+  "x_mitre_defense_bypassed": "Defenses this technique can get around, such as anti-virus or host intrusion prevention.",
+  "x_mitre_permissions_required": "The permission level an attacker needs to run this technique, such as User or Administrator.",
+  "x_mitre_effective_permissions": "The permission level an attacker gains by successfully using this technique.",
+  "x_mitre_system_requirements": "Conditions that must already be in place for the technique to work.",
+  "x_mitre_remote_support": "True if the technique can be carried out remotely rather than only on the local host.",
+  "x_mitre_impact_type": "Whether the technique affects data availability or integrity. Used on impact techniques.",
+  "x_mitre_tactic_type": "For mobile techniques, whether it needs device access or works without it.",
+
+  // Tactic (x-mitre-tactic)
+  "x_mitre_shortname": "The tactic's short name, such as 'credential-access', used to map techniques to it through kill_chain_phases.",
+
+  // Software (malware and tool)
+  "x_mitre_aliases": "The names this software is tracked under, including its primary name and known aliases.",
+
+  // Campaign
+  "x_mitre_first_seen_citation": "The source reference backing up the campaign's first_seen date.",
+  "x_mitre_last_seen_citation": "The source reference backing up the campaign's last_seen date.",
+
+  // Data Source (x-mitre-data-source)
+  "x_mitre_collection_layers": "Where this data can be collected from, such as Host, Network, or Cloud Control Plane.",
+
+  // Data Component (x-mitre-data-component)
+  "x_mitre_data_source_ref": "Points to the parent Data Source this component belongs to.",
+
+  // Collection (x-mitre-collection)
+  "x_mitre_contents": "The full list of objects included in this ATT&CK release, each with its id and last-modified time.",
+
+  // Matrix (x-mitre-matrix)
+  "tactic_refs": "An ordered list of the tactic objects in this matrix. The order sets how tactics appear from left to right.",
+
+  // Asset (x-mitre-asset, mainly ICS)
+  "x_mitre_sectors": "The industry sectors this asset is typically found in, such as electric or water utilities.",
+  "x_mitre_related_assets": "Other names or equivalent assets this one is associated with."
+};
+
+// ── MITRE ATT&CK Custom Object Types ────────────────────────────────────
+
+/**
+ * High-level descriptions for ATT&CK's custom STIX object types.
+ * ATT&CK also reuses standard STIX types: attack-pattern = Technique,
+ * intrusion-set = Group, malware/tool = Software, course-of-action =
+ * Mitigation, campaign = Campaign.
+ */
+export const MITRE_ATTACK_OBJECT_DESCRIPTIONS: Record<string, string> = {
+  "x-mitre-matrix": "An ATT&CK matrix for one domain. Groups and orders the tactics shown across the top of the matrix.",
+  "x-mitre-tactic": "An adversary's tactical goal, the 'why' behind a technique, such as Credential Access. Maps to a kill chain phase.",
+  "x-mitre-data-source": "A subject of data that sensors or logs can collect, such as Network Traffic. Acts as a parent for Data Components.",
+  "x-mitre-data-component": "A specific slice of a Data Source used to detect techniques, such as Network Traffic Flow.",
+  "x-mitre-collection": "A container representing one ATT&CK release, listing every object that release includes.",
+  "x-mitre-asset": "A device or system found in an environment, mainly ICS, such as a PLC or workstation, that techniques may target."
+};
+
+
+
 
 // ── Helper Function ─────────────────────────────────────────────────────
 
 /**
  * Get a tooltip description for a STIX property.
- * Checks object-specific properties first, then falls back to common properties.
- * 
+ * Checks object-specific properties first, then MITRE custom properties, then common properties.
+ *
  * @param propertyName - The STIX property name (e.g., "name", "created")
  * @param objectType - Optional STIX object type (e.g., "attack-pattern")
  * @returns The property description, or undefined if not found
@@ -315,24 +393,35 @@ export function getPropertyDescription(
   if (objectType && STIX_OBJECT_PROPERTIES[objectType]?.[propertyName]) {
     return STIX_OBJECT_PROPERTIES[objectType][propertyName];
   }
-  
+
+  // Check MITRE ATT&CK custom properties
+  if (propertyName.startsWith('x_mitre_') && MITRE_ATTACK_PROPERTIES[propertyName]) {
+    return MITRE_ATTACK_PROPERTIES[propertyName];
+  }
+
   // Fall back to common property
   return STIX_COMMON_PROPERTY_DESCRIPTIONS[propertyName];
 }
 
 /**
  * Get a description for a STIX object type.
- * 
- * @param objectType - The STIX object type (e.g., "attack-pattern")
+ *
+ * @param objectType - The STIX object type (e.g., "attack-pattern", "x-mitre-tactic")
  * @returns The object type description, or undefined if not found
  */
 export function getObjectDescription(objectType: string): string | undefined {
+  // Check MITRE custom object types first
+  if (objectType.startsWith('x-mitre-') && MITRE_ATTACK_OBJECT_DESCRIPTIONS[objectType]) {
+    return MITRE_ATTACK_OBJECT_DESCRIPTIONS[objectType];
+  }
+
+  // Fall back to standard STIX object types
   return STIX_OBJECT_DESCRIPTIONS[objectType];
 }
 
 /**
  * Get a description for a STIX relationship type.
- * 
+ *
  * @param relationshipType - The relationship type (e.g., "indicates", "uses")
  * @returns The relationship description, or undefined if not found
  */

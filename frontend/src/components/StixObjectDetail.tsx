@@ -240,12 +240,12 @@ function KillChainTable({ phases, objectType }: { phases: KillChainPhase[]; obje
             <TableRow>
               <TableCell sx={{ ...tableHeadCell, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <span>Kill Chain</span>
-                <HelpBadge tooltip="The name of the kill chain model (e.g., lockheed-martin-cyber-kill-chain, mitre-attack)" size="sm" placement="top" />
+                <HelpBadge tooltip="A model breaking an attack into sequential phases (e.g., delivery → exploitation → C2). Each STIX object can be tagged to a phase, showing where in the attack lifecycle it applies." size="sm" placement="top" />
               </TableCell>
               <TableCell sx={tableHeadCell}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <span>Phase</span>
-                  <HelpBadge tooltip="The specific phase within the kill chain (e.g., reconnaissance, weaponization, delivery)" size="sm" placement="top" />
+                  <HelpBadge tooltip="Where this object fits in the attack lifecycle." size="sm" placement="top" />
                 </Box>
               </TableCell>
             </TableRow>
@@ -275,13 +275,13 @@ function ExternalRefsTable({ refs }: { refs: ExternalReference[] }) {
               <TableCell sx={tableHeadCell}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <span>Source</span>
-                  <HelpBadge tooltip="The name of the external source providing this reference (e.g., MITRE ATT&CK, CAPEC, CVE)" size="sm" placement="top" />
+                  <HelpBadge tooltip="The name of the external source providing this reference" size="sm" placement="top" />
                 </Box>
               </TableCell>
               <TableCell sx={tableHeadCell}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <span>ID</span>
-                  <HelpBadge tooltip="The identifier used by the external source (e.g., CVE-2021-12345, CAPEC-163, T1566)" size="sm" placement="top" />
+                  <HelpBadge tooltip="The identifier used by the external source" size="sm" placement="top" />
                 </Box>
               </TableCell>
               <TableCell sx={tableHeadCell}>
@@ -377,7 +377,7 @@ function RelationshipTable({
               <TableCell sx={tableHeadCell}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <span>Relationship</span>
-                  <HelpBadge tooltip="The type of relationship connecting these STIX objects (e.g., uses, indicates, targets)" size="sm" placement="top" />
+                  <HelpBadge tooltip="The type of relationship connecting these STIX objects" size="sm" placement="top" />
                 </Box>
               </TableCell>
               <TableCell sx={tableHeadCell}>
