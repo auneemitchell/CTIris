@@ -50,7 +50,7 @@ export default function DashboardBody() {
         {stixObjectId ? (
           <>
             <SectionHeader
-              title={detailTitle ?? 'STIX OBJECT'}
+              title="STIX OBJECT DETAILS"
               tooltip="A detailed profile for a single STIX object, including metadata, description, properties, and known relationships."
             />
             <StixObjectDetail stixId={stixObjectId} onDisplayNameChange={handleStixDetailTitleChange} />
