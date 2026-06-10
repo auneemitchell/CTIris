@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, List, ListItemButton, ListItemText, Typography } from '@mui/material';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { api } from '../api/client';
 import { COLORS } from '../constants/themeColors';
-import PopUpModal from './PopUpModal';
 
 interface CampaignData {
   stix_id: string;
@@ -25,17 +25,14 @@ interface RawStixData {
 }
 
 /**
- * Functional component to display a  list of alphabetically sorted STIX campaign objects in a scrollable container. 
- * When a campaign object is clicked, a pop up modal appears with campaign information using the PopUpModal component.
- * @returns a sorted STIX 
- * 
- * campaign objects
+ * Displays the 10 most recent STIX campaign objects by last_seen date.
+ * Clicking a campaign navigates to that object's routed detail page.
  */
-export default function CampaignList() {
+export default function MostRecentCampaigns() {
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -43,10 +40,10 @@ export default function CampaignList() {
     const fetchCampaigns = async () => {
       try {
         setLoading(true);
-        const rows = await api.stix('campaign', 500, 0, controller.signal);
-        
+        const rows = await api.stix('campaign', 1000, 0, controller.signal);
+
         const rawRows = (rows as RawStixData[]) || [];
-        
+
         const formatted: CampaignData[] = rawRows.map((r) => {
           const props = r.properties || {};
           return {
@@ -58,8 +55,15 @@ export default function CampaignList() {
           };
         });
 
-        formatted.sort((a, b) => a.name.localeCompare(b.name));
-        setCampaigns(formatted);
+        const topTen = formatted
+          // only keep campaigns that contain last_seen
+          .filter((c) => c.last_seen)
+          // convert to timestamp, then sort by newest date first (descending)
+          .sort((a, b) => new Date(b.last_seen!).getTime() - new Date(a.last_seen!).getTime())
+          //keep only the top 10 results
+          .slice(0, 10);
+
+        setCampaigns(topTen);
         setError(null);
       } catch (e: unknown) {
         if (e instanceof Error && e.name !== 'AbortError') {
@@ -80,7 +84,7 @@ export default function CampaignList() {
   if (!campaigns.length) {
     return (
       <Typography sx={{ color: COLORS.textMuted, fontFamily: 'monospace' }}>
-        No active campaigns found.
+        No campaigns found.
       </Typography>
     );
   }
@@ -93,7 +97,7 @@ export default function CampaignList() {
         fontSize: '0.72rem',
         wordBreak: 'break-word',
         whiteSpace: 'pre-wrap',
-        height: 464,
+        height: '52vh',
         overflow: 'hidden',
         bgcolor: COLORS.headerBackground,
         border: `1px solid ${COLORS.dataContainerBorder}`,
@@ -103,25 +107,26 @@ export default function CampaignList() {
       <List sx={{ overflowY: 'auto', flexGrow: 1, p: 0 }}>
         {campaigns.map((c) => {
           const firstSeen = c.first_seen
-            ? new Date(c.first_seen).toLocaleDateString('sv-SE')
-            : 'Unknown';
+            ? new Date(c.first_seen).toISOString().split('T')[0]
+            : 'N/A';
 
           const lastSeen = c.last_seen
-            ? new Date(c.last_seen).toLocaleDateString('sv-SE')
+            ? new Date(c.last_seen).toISOString().split('T')[0]
             : 'N/A';
 
           return (
             <ListItemButton
               key={c.stix_id}
-              onClick={() => setSelectedId(c.stix_id)}
+              onClick={() => navigate('/stix/' + encodeURIComponent(c.stix_id))}
               sx={{
-                py: 0.25,
+                py: 0.2,
                 border: `1px solid ${COLORS.dataContainerBorder}`,
                 borderRadius: 1,
                 bgcolor: COLORS.headerBackground,
                 '&:hover': {
                   bgcolor: COLORS.cardBackground,
                   borderColor: COLORS.dataContainerBorderHover,
+                  boxShadow: `0 4px 20px ${COLORS.hoverBoxShadow}`
                 },
               }}
             >
@@ -130,13 +135,13 @@ export default function CampaignList() {
                 secondary={`${firstSeen} → ${lastSeen}`}
                 primaryTypographyProps={{
                   fontSize: 12,
-                  color: '#fff',
+                  color: COLORS.textPrimary,
                   noWrap: true
                 }}
                 secondaryTypographyProps={{
                   fontSize: 10,
                   fontFamily: 'monospace',
-                  color: 'rgba(255,255,255,0.5)'
+                  color: COLORS.textMuted
                 }}
               />
             </ListItemButton>
@@ -144,10 +149,6 @@ export default function CampaignList() {
         })}
       </List>
 
-      <PopUpModal
-        stixId={selectedId}
-        onClose={() => setSelectedId(null)}
-      />
     </Box>
   );
 }

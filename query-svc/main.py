@@ -159,6 +159,104 @@ def top_by_relationships(
     return [dict(row) for row in rows]
 
 
+@app.get("/stix/{stix_id}/relationships")
+def get_stix_relationships(stix_id: str, conn=Depends(get_db)):
+    """Return all STIX relationship objects involving the given STIX ID.
+
+        Returns two relationship lists and one property-reference lookup:
+    - references: relationship objects where stix_id is source_ref (what this object points to).
+      Each entry includes the resolved name and type of the target object.
+    - referenced_by: relationship objects where stix_id is target_ref (what points to this object).
+      Each entry includes the resolved name and type of the source object.
+        - property_refs: direct object references found in this object's JSON properties,
+            such as created_by_ref and x_mitre_modified_by_ref. These are not relationship
+            objects, but they let the UI resolve display names for referenced STIX IDs.
+
+        Unknown refs are still returned. When the referenced object is not in the local
+        database, name/type are null and the corresponding *_present flag is false.
+
+    Returns empty lists if no relationships exist — never 404.
+
+    Args:
+        stix_id: The STIX object ID (e.g. "malware--uuid").
+
+    Returns:
+        { references: [...], referenced_by: [...], property_refs: [...] }
+
+    Example:
+        GET /stix/malware--4e57a4d2-.../relationships
+    """
+    references_stmt = sa.text("""
+        SELECT
+            rel.properties->>'relationship_type' AS relationship_type,
+            rel.properties->>'target_ref'        AS target_ref,
+            target.properties->>'name'           AS target_name,
+            target.type                          AS target_type,
+            (target.stix_id IS NOT NULL)         AS target_present
+        FROM stix_objects rel
+        LEFT JOIN stix_objects target ON target.stix_id = rel.properties->>'target_ref'
+        WHERE rel.type = 'relationship'
+          AND rel.properties->>'source_ref' = :stix_id
+        ORDER BY relationship_type, target_name NULLS LAST, target_ref
+    """)
+    referenced_by_stmt = sa.text("""
+        SELECT
+            rel.properties->>'relationship_type' AS relationship_type,
+            rel.properties->>'source_ref'        AS source_ref,
+            source.properties->>'name'           AS source_name,
+            source.type                          AS source_type,
+            (source.stix_id IS NOT NULL)         AS source_present
+        FROM stix_objects rel
+        LEFT JOIN stix_objects source ON source.stix_id = rel.properties->>'source_ref'
+        WHERE rel.type = 'relationship'
+          AND rel.properties->>'target_ref' = :stix_id
+        ORDER BY relationship_type, source_name NULLS LAST, source_ref
+    """)
+    property_refs_stmt = sa.text("""
+        WITH current_object AS (
+            SELECT properties
+            FROM stix_objects
+            WHERE stix_id = :stix_id
+        ), property_refs AS (
+            SELECT entry.key AS property_name, entry.value #>> '{}' AS ref
+            FROM current_object
+            CROSS JOIN LATERAL jsonb_each(properties) AS entry(key, value)
+            WHERE entry.key LIKE '%\\_ref' ESCAPE '\\'
+              AND jsonb_typeof(entry.value) = 'string'
+
+            UNION
+
+            SELECT entry.key AS property_name, array_ref.ref
+            FROM current_object
+            CROSS JOIN LATERAL jsonb_each(properties) AS entry(key, value)
+            CROSS JOIN LATERAL jsonb_array_elements_text(
+                CASE
+                    WHEN jsonb_typeof(entry.value) = 'array' THEN entry.value
+                    ELSE '[]'::jsonb
+                END
+            ) AS array_ref(ref)
+            WHERE entry.key LIKE '%\\_refs' ESCAPE '\\'
+        )
+        SELECT
+            property_refs.property_name,
+            property_refs.ref,
+            referenced.properties->>'name' AS name,
+            referenced.type                AS type,
+            (referenced.stix_id IS NOT NULL) AS present
+        FROM property_refs
+        LEFT JOIN stix_objects referenced ON referenced.stix_id = property_refs.ref
+        ORDER BY property_refs.property_name, name NULLS LAST, property_refs.ref
+    """)
+    references = conn.execute(references_stmt, {"stix_id": stix_id}).mappings().fetchall()
+    referenced_by = conn.execute(referenced_by_stmt, {"stix_id": stix_id}).mappings().fetchall()
+    property_refs = conn.execute(property_refs_stmt, {"stix_id": stix_id}).mappings().fetchall()
+    return {
+        "references": [dict(row) for row in references],
+        "referenced_by": [dict(row) for row in referenced_by],
+        "property_refs": [dict(row) for row in property_refs],
+    }
+
+
 @app.get("/stix/{stix_id}")
 def get_stix(stix_id: str, conn=Depends(get_db)):
     """Return a single STIX object by its ID.

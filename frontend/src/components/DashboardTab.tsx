@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { api } from '../api/client';
@@ -10,19 +11,14 @@ import SectionHeader from './SectionHeader';
 import MostActiveThreats from './MostActiveThreats';
 import MostActiveMalware from './MostActiveMalware';
 import Heatmap from './HeatMap';
-import CampaignList from './CampaignList';
 import TargetedIndustries from './TargetedIndustries';
-
-interface Props {
-  /** Called when a stat card is clicked. Switches to the STIX browser filtered to that type. */
-  onTypeClick: (type: string) => void;
-}
+import MostRecentCampaigns from './MostRecentCampaigns';
 
 /**
  * Dashboard tab — stat cards and activity widgets.
- *
  */
-export default function DashboardTab({ onTypeClick }: Props) {
+export default function DashboardTab() {
+  const navigate = useNavigate();
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +55,7 @@ export default function DashboardTab({ onTypeClick }: Props) {
         {DASHBOARD_STIX_TYPES.map(t => (
           <Grid item xs={4} sm={3} md={2} key={t.key}>
             <Card
-              onClick={() => onTypeClick(t.key)}
+              onClick={() => navigate('/stix?type=' + t.key)}
               sx={{
                 background: COLORS.cardBackground,
                 backdropFilter: 'blur(10px)',
@@ -119,14 +115,14 @@ export default function DashboardTab({ onTypeClick }: Props) {
             <TargetedIndustries />
           </Box>
 
-          {/* ── CAMPAIGN LIST ─────────────────────────────────────────────────────────── */}
+          {/* ── MOST RECENT CAMPAIGNS ─────────────────────────────────────────────────────────── */}
           <Box sx={{ p: 1, mt: 3 }}>
             <SectionHeader
-              title="CAMPAIGN LIST"
-              tooltip="Shows a list of observed campaigns. Select a campaign to view detailed intelligence."
+              title="MOST RECENT CAMPAIGNS"
+              tooltip="Shows the top 10 most recent campaigns. Select a campaign to view detailed intelligence."
               gutterBottom={false}
             />
-            <CampaignList />
+            <MostRecentCampaigns />
           </Box>
         </Box>
 

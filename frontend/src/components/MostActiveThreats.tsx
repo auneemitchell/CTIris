@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Chip, Typography } from '@mui/material';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { api } from '../api/client';
 import { COLORS } from '../constants/themeColors';
-import PopUpModal from './PopUpModal';
 
 interface ThreatEntry {
   stix_id: string;
@@ -23,10 +23,10 @@ function typeColor(type: string) {
 }
 
 export default function MostActiveThreats() {
+  const navigate = useNavigate();
   const [top, setTop] = useState<ThreatEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     api.topByRelationships(['threat-actor', 'intrusion-set'], 10)
@@ -51,7 +51,7 @@ export default function MostActiveThreats() {
   const maxCount = top[0].count;
 
   function handleRowClick(entry: ThreatEntry) {
-    setSelectedId(entry.stix_id);
+    navigate('/stix/' + encodeURIComponent(entry.stix_id));
   }
 
   return (
@@ -122,7 +122,6 @@ export default function MostActiveThreats() {
         ))}
       </Box>
 
-      <PopUpModal stixId={selectedId} onClose={() => setSelectedId(null)} />
     </Box>
   );
 }
