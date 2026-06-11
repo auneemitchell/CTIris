@@ -97,8 +97,8 @@ export default function DashboardTab() {
         {/* ── HEATMAP ───────────────────────────────────────────────────────────*/}
         <Box sx={{ flex: 4, p: 1 }}>
           <SectionHeader
-            title="GLOBAL THREAT CONCENTRATION MAP"
-            tooltip="Shows the geographic distribution of STIX objects based on mention frequency. Higher concentrations appear in darker red. Select a country to view the number of reference."
+            title="TARGETED COUNTRIES"
+            tooltip="Shows countries targeted by STIX objects (threat actors, malware, campaigns, intrusion sets, tools, and attack patterns) via targets relationships. Higher concentrations appear in darker red."
             gutterBottom={false}
           />
           <Heatmap />

@@ -99,6 +99,21 @@ export interface StixRelationships {
   property_refs: StixPropertyRef[];
 }
 
+/**
+ * One row from the geo-heatmap endpoint.
+ * Aggregated counts of location-bearing relationships, grouped by country and relationship type.
+ */
+export interface GeoHeatmapEntry {
+  /** ISO 3166-1 alpha-2 country code from the STIX location object, or null if absent. */
+  country: string | null;
+  /** Display name of the location object. */
+  location_name: string | null;
+  /** STIX relationship type — one of: located-at, originates-from, targets. */
+  relationship_type: string;
+  /** Number of relationships of this type pointing at this location. */
+  count: number;
+}
+
 /** One ingestion run record — written after every poll attempt, success or failure. */
 export interface IngestionLog {
   id: string;
@@ -183,5 +198,16 @@ export const api = {
 
   locations: (limit = 1000, signal?: AbortSignal) => {
     return api.stix('location', limit, 0, signal);
+  },
+
+  /**
+   * Fetch pre-aggregated geographic relationship counts for the heatmap widget.
+   * Returns one row per (country, relationship_type) pair — no client-side join needed.
+   * @param relationshipType - Which relationship type to map. Defaults to "targets".
+   *   Pass "originates-from" or "located-at" for origin/presence maps.
+   */
+  geoHeatmap: (relationshipType = 'targets', signal?: AbortSignal) => {
+    const p = new URLSearchParams({ relationship_type: relationshipType });
+    return get<GeoHeatmapEntry[]>(`/stix/geo-heatmap?${p}`, signal);
   },
 };
