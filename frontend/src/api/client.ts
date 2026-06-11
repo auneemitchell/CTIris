@@ -203,6 +203,11 @@ export const api = {
   /**
    * Fetch pre-aggregated geographic relationship counts for the heatmap widget.
    * Returns one row per (country, relationship_type) pair — no client-side join needed.
+   * @param relationshipType - Which relationship type to map. Defaults to "targets".
+   *   Pass "originates-from" or "located-at" for origin/presence maps.
    */
-  geoHeatmap: (signal?: AbortSignal) => get<GeoHeatmapEntry[]>('/stix/geo-heatmap', signal),
+  geoHeatmap: (relationshipType = 'targets', signal?: AbortSignal) => {
+    const p = new URLSearchParams({ relationship_type: relationshipType });
+    return get<GeoHeatmapEntry[]>(`/stix/geo-heatmap?${p}`, signal);
+  },
 };

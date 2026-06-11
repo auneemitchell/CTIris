@@ -159,13 +159,27 @@ def top_by_relationships(
     return [dict(row) for row in rows]
 
 
+_GEO_RELATIONSHIP_TYPES = {"targets", "located-at", "originates-from"}
+
+
 @app.get("/stix/geo-heatmap")
-def geo_heatmap(conn=Depends(get_db)):
+def geo_heatmap(
+    relationship_type: str = Query(
+        "targets",
+        description="STIX relationship type to map. One of: targets, located-at, originates-from.",
+    ),
+    conn=Depends(get_db),
+):
     """Return geographic relationship counts for the heatmap widget.
 
     Joins relationship objects to location objects and aggregates by country
-    and relationship type. Only the three relationship types that carry
-    geographic meaning are included: located-at, originates-from, and targets.
+    and relationship type. Supports the three relationship types that carry
+    geographic meaning: targets, located-at, and originates-from.
+
+    Args:
+        relationship_type: Which relationship type to aggregate. Defaults to
+            "targets" (countries being attacked). Pass "originates-from" or
+            "located-at" to build origin/presence maps instead.
 
     Returns:
         List of {country, location_name, relationship_type, count} dicts.
@@ -173,9 +187,18 @@ def geo_heatmap(conn=Depends(get_db)):
         object has no country field). count is the number of relationships
         of that type pointing at that location.
 
+    Raises:
+        400: If relationship_type is not one of the three supported values.
+
     Example:
         GET /stix/geo-heatmap
+        GET /stix/geo-heatmap?relationship_type=originates-from
     """
+    if relationship_type not in _GEO_RELATIONSHIP_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid relationship_type '{relationship_type}'. Must be one of: {sorted(_GEO_RELATIONSHIP_TYPES)}",
+        )
     stmt = sa.text("""
         SELECT
             loc.properties->>'country'           AS country,
@@ -186,7 +209,7 @@ def geo_heatmap(conn=Depends(get_db)):
         JOIN stix_objects loc
           ON loc.stix_id = rel.properties->>'target_ref'
         WHERE rel.type = 'relationship'
-          AND rel.properties->>'relationship_type' = 'targets'
+          AND rel.properties->>'relationship_type' = :relationship_type
           AND loc.type = 'location'
         GROUP BY
             loc.properties->>'country',
@@ -194,7 +217,7 @@ def geo_heatmap(conn=Depends(get_db)):
             rel.properties->>'relationship_type'
         ORDER BY country, relationship_type
     """)
-    rows = conn.execute(stmt).mappings().fetchall()
+    rows = conn.execute(stmt, {"relationship_type": relationship_type}).mappings().fetchall()
     return [dict(row) for row in rows]
 
 

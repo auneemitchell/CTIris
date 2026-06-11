@@ -147,6 +147,19 @@ class TestGeoHeatmap:
         assert response.status_code == 200
         assert response.json() == []
 
+    def test_defaults_to_targets(self):
+        response = client.get("/stix/geo-heatmap")
+        assert response.status_code == 200
+
+    def test_accepts_valid_relationship_types(self):
+        for rel_type in ["targets", "located-at", "originates-from"]:
+            response = client.get(f"/stix/geo-heatmap?relationship_type={rel_type}")
+            assert response.status_code == 200
+
+    def test_rejects_invalid_relationship_type(self):
+        response = client.get("/stix/geo-heatmap?relationship_type=uses")
+        assert response.status_code == 400
+
     def test_returns_aggregated_rows(self):
         rows = [
             {"country": "US", "location_name": "United States", "relationship_type": "targets", "count": 12},
