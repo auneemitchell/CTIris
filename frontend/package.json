@@ -22,7 +22,8 @@
     "react-dom": "^18.3.1",
     "react-force-graph-2d": "^1.29.1",
     "react-router-dom": "^7.17.0",
-    "react-simple-maps": "^3.0.0"
+    "react-simple-maps": "^3.0.0",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
