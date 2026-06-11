@@ -207,8 +207,8 @@ export default function Heatmap() {
             >
                 <ComposableMap
                     projection="geoMercator"
-                    projectionConfig={{ scale: 120, center: [0, -30] }}
-                    style={{ width: '100%', height: 'auto' }}
+                    projectionConfig={{ scale: 100, center: [38, 0] }}
+                    style={{ width: '120%', height: 'auto' }}
                 >
                     <Sphere id="rsm-sphere" stroke={COLORS.heatmapStroke} strokeWidth={0.5} fill="transparent" />
                     <Graticule stroke={COLORS.heatmapStroke} strokeWidth={0.5} />
