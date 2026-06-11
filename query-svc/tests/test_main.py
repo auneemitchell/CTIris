@@ -8,6 +8,7 @@ specific return values override it inline.
 """
 
 import uuid
+from datetime import datetime
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
@@ -79,6 +80,24 @@ class TestSerialize:
         assert result["name"] == "MITRE"
         assert result["enabled"] is True
 
+    def test_converts_datetime_to_isoformat(self):
+        dt = datetime(2026, 6, 10, 12, 30, 45)
+        row = {"created": dt, "name": "Test"}
+        result = _serialize(row)
+        assert result["created"] == "2026-06-10T12:30:45"
+        assert isinstance(result["created"], str)
+
+    def test_mixed_row_with_datetime_and_uuid(self):
+        dt = datetime(2026, 6, 10, 15, 0, 0)
+        row = {"id": FEED_ID, "created": dt, "name": "MITRE", "active": True}
+        result = _serialize(row)
+        assert isinstance(result["id"], str)
+        assert result["id"] == str(FEED_ID)
+        assert isinstance(result["created"], str)
+        assert result["created"] == "2026-06-10T15:00:00"
+        assert result["name"] == "MITRE"
+        assert result["active"] is True
+
 
 # ---------------------------------------------------------------------------
 # GET /health
@@ -103,7 +122,16 @@ class TestListStix:
 
     def test_returns_serialized_rows(self):
         rows = [{"stix_id": STIX_ID, "type": "attack-pattern", "feed_id": FEED_ID}]
-        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        # Mock connection needs to handle both count query and data query
+        conn = MagicMock()
+        # First call: count query returns scalar
+        count_result = MagicMock()
+        count_result.scalar.return_value = 1
+        # Second call: data query returns rows
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
         response = client.get("/stix")
         assert response.status_code == 200
         data = response.json()
@@ -125,10 +153,97 @@ class TestListStix:
 
     def test_filters_by_type(self):
         rows = [{"stix_id": STIX_ID, "type": "malware", "feed_id": FEED_ID}]
-        app.dependency_overrides[get_db] = _override(_mock_conn(fetchall_rows=rows))
+        conn = MagicMock()
+        count_result = MagicMock()
+        count_result.scalar.return_value = 1
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
         response = client.get("/stix?type=malware")
         assert response.status_code == 200
         assert response.json()[0]["type"] == "malware"
+
+    def test_returns_x_total_count_header(self):
+        rows = [{"stix_id": STIX_ID, "type": "malware", "feed_id": FEED_ID}]
+        conn = MagicMock()
+        count_result = MagicMock()
+        count_result.scalar.return_value = 42  # Total count of 42
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
+        response = client.get("/stix")
+        assert response.status_code == 200
+        assert "X-Total-Count" in response.headers
+        assert response.headers["X-Total-Count"] == "42"
+
+    def test_search_by_stix_id(self):
+        rows = [{"stix_id": STIX_ID, "type": "attack-pattern", "feed_id": FEED_ID}]
+        conn = MagicMock()
+        count_result = MagicMock()
+        count_result.scalar.return_value = 1
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
+        response = client.get("/stix?search=attack-pattern")
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    def test_search_by_name(self):
+        rows = [{"stix_id": "malware--test", "type": "malware", "feed_id": FEED_ID}]
+        conn = MagicMock()
+        count_result = MagicMock()
+        count_result.scalar.return_value = 1
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
+        response = client.get("/stix?search=emotet")
+        assert response.status_code == 200
+
+    def test_search_with_empty_string_ignores_filter(self):
+        rows = [{"stix_id": STIX_ID, "type": "malware", "feed_id": FEED_ID}]
+        conn = MagicMock()
+        count_result = MagicMock()
+        count_result.scalar.return_value = 1
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
+        response = client.get("/stix?search=")
+        assert response.status_code == 200
+        # Empty search should not filter
+
+    def test_search_combined_with_type_filter(self):
+        rows = [{"stix_id": "malware--emotet", "type": "malware", "feed_id": FEED_ID}]
+        conn = MagicMock()
+        count_result = MagicMock()
+        count_result.scalar.return_value = 1
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
+        response = client.get("/stix?type=malware&search=emotet")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["type"] == "malware"
+
+    def test_pagination_with_total_count(self):
+        rows = [{"stix_id": f"malware--test-{i}", "type": "malware", "feed_id": FEED_ID} for i in range(10)]
+        conn = MagicMock()
+        count_result = MagicMock()
+        count_result.scalar.return_value = 100  # Total of 100 objects
+        data_result = MagicMock()
+        data_result.mappings.return_value.fetchall.return_value = rows
+        conn.execute.side_effect = [count_result, data_result]
+        app.dependency_overrides[get_db] = _override(conn)
+        response = client.get("/stix?limit=10&offset=0")
+        assert response.status_code == 200
+        assert response.headers["X-Total-Count"] == "100"
+        assert len(response.json()) == 10
 
 
 # ---------------------------------------------------------------------------

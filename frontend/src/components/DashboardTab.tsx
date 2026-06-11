@@ -12,7 +12,7 @@ import MostActiveThreats from './MostActiveThreats';
 import MostActiveMalware from './MostActiveMalware';
 import Heatmap from './HeatMap';
 import DonutChart from './DonutChart';
-import CampaignList from './CampaignList';
+import CampaignList from './MostRecentCampaigns';
 
 /**
  * Dashboard tab — stat cards and activity widgets.

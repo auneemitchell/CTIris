@@ -1,9 +1,11 @@
 import os
 import uuid
+from datetime import datetime
 
 import sqlalchemy as sa
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from db import (
     feeds_table,
@@ -24,6 +26,7 @@ app.add_middleware(
     allow_origins=[_allowed_origin],
     allow_methods=["GET"],
     allow_headers=["*"],
+    expose_headers=["X-Total-Count"],
 )
 
 
@@ -32,9 +35,17 @@ def get_db():
         yield conn
 
 
-# Converts UUID to String so JSON can handle them (JSON has no UUID type)
+# Converts UUID and datetime to String so JSON can handle them (JSON has no UUID or datetime type)
 def _serialize(row: dict) -> dict:
-    return {k: str(v) if isinstance(v, uuid.UUID) else v for k, v in row.items()}
+    result = {}
+    for k, v in row.items():
+        if isinstance(v, uuid.UUID):
+            result[k] = str(v)
+        elif isinstance(v, datetime):
+            result[k] = v.isoformat()
+        else:
+            result[k] = v
+    return result
 
 
 @app.get("/health")
@@ -54,6 +65,7 @@ def list_stix(
     # We use it here to set default values and validation rules (ge, le).
     # Incoming params without Query() are assumed to come from the query string anyway.
     type: str | None = Query(None),
+    search: str | None = Query(None),
     # This is limiting the number of request to be between 1 and 1000 with a
     # default of 100. Change le if we want a smaller upper limit.
     limit: int = Query(100, ge=1, le=1000),
@@ -66,32 +78,70 @@ def list_stix(
 
     Args:
         type: Filter by STIX type (e.g. "attack-pattern", "malware"). Optional.
+        search: Search by STIX ID or name (case-insensitive). Optional.
         limit: Max results to return. Default 100, max 1000.
         offset: Number of results to skip for pagination. Default 0.
 
     Returns:
-        List of STIX objects as JSON.
+        List of STIX objects as JSON with X-Total-Count header.
 
     Example:
         GET /stix?type=attack-pattern&limit=50&offset=100
+        GET /stix?search=emotet&limit=50&offset=0
+        GET /stix?type=malware&search=emotet&limit=50&offset=0
     """
+    # Build WHERE conditions for filtering
+    conditions = []
+
+    # Filter by type if specified
+    if type:
+        conditions.append(stix_objects_table.c.type == type)
+
+    # Filter by search term if specified (case-insensitive search on stix_id or name)
+    if search and search.strip():
+        # Escape SQL LIKE wildcards in user input so they're treated as literals
+        escaped_search = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_pattern = f"%{escaped_search}%"
+        conditions.append(
+            sa.or_(
+                stix_objects_table.c.stix_id.ilike(search_pattern, escape="\\"),
+                stix_objects_table.c.properties["name"].astext.ilike(search_pattern, escape="\\"),
+            )
+        )
+        
+    # Get total count with same filters
+    count_stmt = sa.select(sa.func.count()).select_from(stix_objects_table)
+    if conditions:
+        count_stmt = count_stmt.where(sa.and_(*conditions))
+    total_count = conn.execute(count_stmt).scalar()
+
     # Builds the SQL query using SQLAlchemy
+    # Order by name (alphabetically), with objects without names at the end, then by stix_id
     stmt = (
         sa.select(stix_objects_table)
-        .order_by(stix_objects_table.c.stix_id)
+        .order_by(
+            stix_objects_table.c.properties["name"].astext.nullslast(),
+            stix_objects_table.c.stix_id
+        )
         .limit(limit)
         .offset(offset)
     )
-    # Appends a WHERE clause to the query if a type was specified
-    # This will filter the query to just this type.
-    if type:
-        stmt = stmt.where(stix_objects_table.c.type == type)
+    # Apply the same filters to the main query
+    if conditions:
+        stmt = stmt.where(sa.and_(*conditions))
+
     # Executes the statement and returns all matching rows as a list.
     # .mappings() returns each row as a dictionary-like object instead of a tuple
     rows = conn.execute(stmt).mappings().fetchall()
     # dict(row) converts the SQL alchemy mapping into a plain Python dictionary
     # _serialize is a method defined above: converts uuid to strings for the JSON
-    return [_serialize(dict(row)) for row in rows]
+    data = [_serialize(dict(row)) for row in rows]
+
+    # Return response with X-Total-Count header
+    return JSONResponse(
+        content=data,
+        headers={"X-Total-Count": str(total_count)},
+    )
 
 
 @app.get("/stix/counts")

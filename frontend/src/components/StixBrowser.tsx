@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Box, FormControl,
-  InputAdornment, InputLabel, MenuItem, Paper, Select,
+  Box, Button, FormControl,
+  InputAdornment, InputLabel, MenuItem, Pagination, Paper, Select,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Typography,
 } from '@mui/material';
@@ -36,8 +36,12 @@ function formatDate(d: string | null | undefined) {
  * the dropdown navigates to a new URL, which re-derives typeFilter and fires
  * a new fetch. An AbortController cancels in-flight requests on filter change.
  *
- * Search (client-side): filters the already-fetched array by name or stix_id
- * without an extra API call.
+ * Search (server-side): driven by the ?search= URL search param. User must
+ * click the search button or press Enter to trigger a search. Search filters
+ * by STIX ID or name on the backend.
+ *
+ * Pagination: Page numbers controlled by ?page= URL param. Shows PAGE_SIZE
+ * results per page with total count from X-Total-Count header.
  *
  * Detail modal: clicking a row navigates to /stix/{id}, opening PopUpModal.
  * The modal self-fetches the full object via api.stixById.
@@ -47,24 +51,22 @@ export default function StixBrowser() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Derive typeFilter from URL, but only when on a /stix path so that
-  // navigating to another tab doesn't trigger spurious re-fetches while
-  // the component stays mounted but hidden.
-  const isStixPath = location.pathname.startsWith('/stix');
-  const urlType = isStixPath ? (searchParams.get('type') ?? '') : null;
+  // Derive filters directly from URL search params
+  const typeFilter = searchParams.get('type') ?? '';
+  const searchQuery = searchParams.get('search') ?? '';
+  const currentPage = parseInt(searchParams.get('page') ?? '1', 10);
 
   const [objects, setObjects] = useState<StixObject[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [fetchedFor, setFetchedFor] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState(urlType ?? '');
-  const [search, setSearch] = useState('');
+  const [fetchedFor, setFetchedFor] = useState<string>('');
+  const [searchInput, setSearchInput] = useState(searchQuery);
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
 
-  // Sync local typeFilter when the URL type param changes (stat card click,
-  // back/forward). Fires during render to avoid a one-frame stale display.
-  const [prevUrlType, setPrevUrlType] = useState(urlType);
-  if (urlType !== null && prevUrlType !== urlType) {
-    setPrevUrlType(urlType);
-    setTypeFilter(urlType);
+  // Sync search input when URL searchQuery changes (React's getDerivedStateFromProps pattern)
+  if (searchQuery !== prevSearchQuery) {
+    setSearchInput(searchQuery);
+    setPrevSearchQuery(searchQuery);
   }
 
   // Derive the selected object ID from the URL path (e.g. /stix/malware--uuid)
@@ -72,69 +74,111 @@ export default function StixBrowser() {
     ? decodeURIComponent(location.pathname.slice('/stix/'.length)) || null
     : null;
 
-  // loading is true whenever typeFilter has changed but the fetch hasn't settled yet
-  const loading = fetchedFor !== typeFilter;
+  // loading is true whenever URL params have changed but the fetch hasn't settled yet
+  const currentKey = `${typeFilter}|${searchQuery}|${currentPage}`;
+  const loading = fetchedFor !== currentKey;
   // suppress stale errors from a previous filter while a new fetch is in flight
-  const currentError = fetchedFor === typeFilter ? error : null;
+  const currentError = fetchedFor === currentKey ? error : null;
 
-  // Fetch when filter changes; AbortController prevents stale responses
-  // Currently limiting number fetches to 200 objects (PAGE_LIMIT)
-  // TODO: Set up pagination
+  // Fetch when URL params change; AbortController prevents stale responses
+  const PAGE_SIZE = 50;
   useEffect(() => {
     const controller = new AbortController();
-    const PAGE_LIMIT = 200;
-    api.stix(typeFilter || undefined, PAGE_LIMIT, 0, controller.signal)
-      .then(data => {
+    const offset = (currentPage - 1) * PAGE_SIZE;
+    const key = `${typeFilter}|${searchQuery}|${currentPage}`;
+
+    api.stixWithCount(
+      typeFilter || undefined,
+      searchQuery || undefined,
+      PAGE_SIZE,
+      offset,
+      controller.signal
+    )
+      .then(response => {
         if (!controller.signal.aborted) {
-          setObjects(data);
+          setObjects(response.data);
+          setTotalCount(response.totalCount);
           setError(null);
-          setFetchedFor(typeFilter);
+          setFetchedFor(key);
         }
       })
       .catch(e => {
         if (!controller.signal.aborted) {
           setError(String(e));
-          setFetchedFor(typeFilter);
+          setFetchedFor(key);
         }
       });
     return () => controller.abort();
-  }, [typeFilter]);
+  }, [typeFilter, searchQuery, currentPage]);
 
-  const visible = objects.filter(o => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return o.stix_id.toLowerCase().includes(q) || getName(o).toLowerCase().includes(q);
-  });
+  // Handle search form submission
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (typeFilter) params.set('type', typeFilter);
+    if (searchInput.trim()) params.set('search', searchInput.trim());
+    params.set('page', '1'); // Reset to first page on new search
+    navigate('/stix?' + params.toString());
+  };
+
+  // Handle pagination
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const handlePageChange = (_: unknown, page: number) => {
+    const params = new URLSearchParams();
+    if (typeFilter) params.set('type', typeFilter);
+    if (searchQuery) params.set('search', searchQuery);
+    params.set('page', String(page));
+    navigate('/stix?' + params.toString());
+  };
 
   return (
     <Box>
       <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-        <TextField
-          size="small"
-          placeholder="Search by name or ID..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Typography sx={{ color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1 }}>⌕</Typography>
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            flex: 1,
-            minWidth: 200,
-            '& input': { color: COLORS.textPrimary },
-            '& .MuiOutlinedInput-root fieldset': { borderColor: COLORS.dataContainerBorder },
-            '& .MuiOutlinedInput-root:hover fieldset': { borderColor: COLORS.dataContainerBorderHover },
-          }}
-        />
+        <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: 'flex', gap: 1, flex: 1, minWidth: 200 }}>
+          <TextField
+            size="small"
+            placeholder="Search by name or ID..."
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Typography sx={{ color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1 }}>⌕</Typography>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              flex: 1,
+              '& input': { color: COLORS.textPrimary },
+              '& .MuiOutlinedInput-root fieldset': { borderColor: COLORS.dataContainerBorder },
+              '& .MuiOutlinedInput-root:hover fieldset': { borderColor: COLORS.dataContainerBorderHover },
+            }}
+          />
+          <Button
+            type="submit"
+            variant="outlined"
+            size="small"
+            sx={{
+              color: COLORS.textPrimary,
+              borderColor: COLORS.dataContainerBorder,
+              '&:hover': { borderColor: COLORS.dataContainerBorderHover, bgcolor: COLORS.cardBackground },
+            }}
+          >
+            Search
+          </Button>
+        </Box>
         <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel sx={{ color: COLORS.textMuted }}>Type</InputLabel>
           <Select
             value={typeFilter}
             label="Type"
-            onChange={e => navigate('/stix' + (e.target.value ? '?type=' + e.target.value : ''))}
+            onChange={e => {
+              const params = new URLSearchParams();
+              if (e.target.value) params.set('type', e.target.value);
+              if (searchQuery) params.set('search', searchQuery);
+              params.set('page', '1'); // Reset to first page on filter change
+              navigate('/stix?' + params.toString());
+            }}
             MenuProps={{
               PaperProps: {
                 sx: {
@@ -165,7 +209,8 @@ export default function StixBrowser() {
       ) : (
         <>
           <Typography variant="caption" sx={{ color: COLORS.textMuted, mb: 1, display: 'block', fontFamily: 'monospace' }}>
-            {visible.length} object{visible.length !== 1 ? 's' : ''}
+            {totalCount.toLocaleString()} object{totalCount !== 1 ? 's' : ''}
+            {totalPages > 1 && ` (page ${currentPage} of ${totalPages})`}
           </Typography>
           <TableContainer component={Paper} sx={{
             backgroundColor: COLORS.headerBackground,
@@ -175,7 +220,7 @@ export default function StixBrowser() {
             <Table size="small" sx={{ '& .MuiTableCell-root': { borderBottom: `1px solid ${COLORS.dataContainerBorder}` } }}>
               <TableHead>
                 <TableRow>
-                  {['Type', 'Name', 'ID', 'Ingested'].map(h => (
+                  {['Name', 'Type', 'ID', 'Ingested'].map(h => (
                     <TableCell key={h} sx={{ color: COLORS.textQuaternary, fontWeight: 'bold', letterSpacing: 1, textTransform: 'uppercase', fontSize: '0.7rem' }}>
                       {h}
                     </TableCell>
@@ -183,17 +228,17 @@ export default function StixBrowser() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {visible.map(obj => (
+                {objects.map(obj => (
                   <TableRow
                     key={obj.stix_id}
                     onClick={() => navigate('/stix/' + encodeURIComponent(obj.stix_id) + (typeFilter ? '?type=' + typeFilter : ''))}
                     sx={{ cursor: 'pointer', '&:hover': { backgroundColor: COLORS.cardBackground, boxShadow: `0 4px 20px ${COLORS.hoverBoxShadow}` } }}
                   >
-                    <TableCell sx={{ color: COLORS.textSecondary, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                      {obj.type}
-                    </TableCell>
                     <TableCell sx={{ color: COLORS.textPrimary, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {getName(obj)}
+                    </TableCell>
+                    <TableCell sx={{ color: COLORS.textSecondary, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                      {obj.type}
                     </TableCell>
                     <TableCell sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.7rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {obj.stix_id}
@@ -206,6 +251,26 @@ export default function StixBrowser() {
               </TableBody>
             </Table>
           </TableContainer>
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
+                color="primary"
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    color: COLORS.textPrimary,
+                    borderColor: COLORS.dataContainerBorder,
+                  },
+                  '& .Mui-selected': {
+                    bgcolor: COLORS.cardBackground,
+                    borderColor: COLORS.dataContainerBorderHover,
+                  },
+                }}
+              />
+            </Box>
+          )}
         </>
       )}
 

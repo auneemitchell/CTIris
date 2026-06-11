@@ -139,6 +139,12 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Response with pagination metadata from X-Total-Count header. */
+export interface PaginatedResponse<T> {
+  data: T;
+  totalCount: number;
+}
+
 /** Typed fetch wrappers for every CTIris API endpoint. */
 export const api = {
   /**
@@ -147,11 +153,33 @@ export const api = {
    * @param limit - Max objects to return. API hard cap is 1000.
    * @param offset - Number of objects to skip, for pagination.
    * @param signal - Optional AbortSignal to cancel the request.
+   * @returns Array of STIX objects.
    */
   stix: (type?: string, limit = 1000, offset = 0, signal?: AbortSignal) => {
     const p = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     if (type) p.set('type', type);
     return get<StixObject[]>(`/stix?${p}`, signal);
+  },
+
+  /**
+   * Fetch a page of STIX objects with pagination metadata.
+   * Supports server-side search and returns total count via X-Total-Count header.
+   * @param type - Optional STIX type filter (e.g. `'malware'`). Omit for all types.
+   * @param search - Optional search term to filter by STIX ID or name.
+   * @param limit - Max objects to return. API hard cap is 1000.
+   * @param offset - Number of objects to skip, for pagination.
+   * @param signal - Optional AbortSignal to cancel the request.
+   * @returns Object with `data` (array of STIX objects) and `totalCount` (from X-Total-Count header).
+   */
+  stixWithCount: async (type?: string, search?: string, limit = 1000, offset = 0, signal?: AbortSignal): Promise<PaginatedResponse<StixObject[]>> => {
+    const p = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    if (type) p.set('type', type);
+    if (search) p.set('search', search);
+    const res = await fetch(`${BASE}/stix?${p}`, { signal });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const data = await res.json() as StixObject[];
+    const totalCount = parseInt(res.headers.get('X-Total-Count') || '0', 10);
+    return { data, totalCount };
   },
 
   /** Fetch object counts grouped by STIX type — one DB query, no limit. */
