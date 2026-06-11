@@ -3,7 +3,7 @@ import { Box, Paper } from '@mui/material';
 import { COLORS } from '../constants/themeColors';
 import { api, type StixObject } from '../api/client';
 import LoadingSpinner from './LoadingSpinner';
-import { PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { PolarGrid, PolarAngleAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
 
 
 const INDUSTRY_KEYWORDS: Record<string, string[]> = {
