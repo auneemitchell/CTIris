@@ -213,7 +213,7 @@ export default function StixBrowser() {
             <Table size="small" sx={{ '& .MuiTableCell-root': { borderBottom: `1px solid ${COLORS.dataContainerBorder}` } }}>
               <TableHead>
                 <TableRow>
-                  {['Type', 'Name', 'ID', 'Ingested'].map(h => (
+                  {['Name', 'Type', 'ID', 'Ingested'].map(h => (
                     <TableCell key={h} sx={{ color: COLORS.textQuaternary, fontWeight: 'bold', letterSpacing: 1, textTransform: 'uppercase', fontSize: '0.7rem' }}>
                       {h}
                     </TableCell>
@@ -227,11 +227,11 @@ export default function StixBrowser() {
                     onClick={() => navigate('/stix/' + encodeURIComponent(obj.stix_id))}
                     sx={{ cursor: 'pointer', '&:hover': { backgroundColor: COLORS.cardBackground, boxShadow: `0 4px 20px ${COLORS.hoverBoxShadow}` } }}
                   >
-                    <TableCell sx={{ color: COLORS.textSecondary, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                      {obj.type}
-                    </TableCell>
                     <TableCell sx={{ color: COLORS.textPrimary, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {getName(obj)}
+                    </TableCell>
+                    <TableCell sx={{ color: COLORS.textSecondary, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                      {obj.type}
                     </TableCell>
                     <TableCell sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.7rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {obj.stix_id}

@@ -114,9 +114,13 @@ def list_stix(
     total_count = conn.execute(count_stmt).scalar()
 
     # Builds the SQL query using SQLAlchemy
+    # Order by name (alphabetically), with objects without names at the end, then by stix_id
     stmt = (
         sa.select(stix_objects_table)
-        .order_by(stix_objects_table.c.stix_id)
+        .order_by(
+            stix_objects_table.c.properties["name"].astext.nullslast(),
+            stix_objects_table.c.stix_id
+        )
         .limit(limit)
         .offset(offset)
     )
