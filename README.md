@@ -68,6 +68,14 @@ Notes:
 - Stops and removes all containers. The `postgres-data` volume is preserved so data survives restarts.
 - Add `-v` to also wipe the database: `docker compose down -v`
 
+### Sample Data
+
+The project comes pre-configured with the [MITRE ATT&CK TAXII feed](https://attack.mitre.org/resources/attack-data-and-tools/), which the ingestion service polls on startup to populate the database with threat actors, malware, campaigns, techniques, and relationships.
+
+On first startup, `db-svc` also automatically seeds the database with STIX location objects for every country and US state (sourced from the [OASIS cti-stix-common-objects](https://github.com/oasis-open/cti-stix-common-objects) repository) and a small set of hand-crafted `targets` relationships that populate the heatmap widget.
+
+To add your own relationships or understand how the seed data works, see [db-svc/seeds/README.md](db-svc/seeds/README.md).
+
 ## Services
 
 | Service | Description | Docs |
