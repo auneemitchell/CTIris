@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
+  Button,
   Chip,
   Divider,
   Link,
@@ -14,7 +15,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { api } from '../api/client';
+import { api, BASE } from '../api/client';
 import type { StixObject, StixRelationships, StixRelationshipRef, StixRelationshipBackRef, StixPropertyRef } from '../api/client';
 import { COLORS } from '../constants/themeColors';
 import LoadingSpinner from './LoadingSpinner';
@@ -469,6 +470,17 @@ export default function StixObjectDetail({ stixId, onDisplayNameChange }: Props)
               size="small"
               sx={{ bgcolor: COLORS.textQuaternary, color: COLORS.backgroundDefault, fontWeight: 'bold', fontSize: '0.75rem', flexShrink: 0 }}
             />
+            <Button
+              variant="outlined"
+              size="small"
+              component="a"
+              href={`${BASE}/stix/${encodeURIComponent(stixId)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: COLORS.textPrimary, borderColor: COLORS.dataContainerBorderHover, textTransform: 'none', fontSize: '0.7rem' }}
+            >
+              View Raw JSON
+            </Button>
           </Box>
 
           <Divider sx={{ borderColor: COLORS.dataContainerBorder }} />
