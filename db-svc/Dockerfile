@@ -6,5 +6,5 @@ WORKDIR /app
 COPY . /app
 RUN pip install --no-cache-dir /app
 
-# Run schema migrations then exit (one-shot migration job).
-CMD ["alembic", "upgrade", "head"]
+# Run schema migrations, then seed location objects if not already present.
+CMD ["sh", "-c", "alembic upgrade head && python seed_locations.py"]
