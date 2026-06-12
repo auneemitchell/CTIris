@@ -1,4 +1,3 @@
-import { useCallback, useState } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
 import { useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { COLORS } from '../constants/themeColors';
@@ -19,15 +18,7 @@ export default function DashboardBody() {
   const navigate = useNavigate();
   const stixDetailMatch = useMatch('/stix/:id');
   const stixObjectId = stixDetailMatch ? decodeURIComponent(stixDetailMatch.params.id!) : null;
-  const [stixDetailTitle, setStixDetailTitle] = useState<{ stixId: string; title: string } | null>(null);
   const tab: number | false = stixObjectId ? false : location.pathname.startsWith('/feeds') ? 1 : location.pathname.startsWith('/stix') ? 2 : 0;
-
-  const detailTitle = stixObjectId && stixDetailTitle?.stixId === stixObjectId ? stixDetailTitle.title : null;
-  const handleStixDetailTitleChange = useCallback((title: string) => {
-    if (stixObjectId) {
-      setStixDetailTitle({ stixId: stixObjectId, title });
-    }
-  }, [stixObjectId]);
 
   return (
     <Box sx={{ bgcolor: COLORS.backgroundContainer, minHeight: '100vh', paddingX: { xs: 2, md: 8 }, paddingY: 2, pb: 10 }}>
@@ -53,7 +44,7 @@ export default function DashboardBody() {
               title="STIX OBJECT DETAILS"
               tooltip="A detailed profile for a single STIX object, including metadata, description, properties, and known relationships."
             />
-            <StixObjectDetail stixId={stixObjectId} onDisplayNameChange={handleStixDetailTitleChange} />
+            <StixObjectDetail stixId={stixObjectId} />
           </>
         ) : (
           <>
