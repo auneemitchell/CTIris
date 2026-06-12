@@ -12,7 +12,6 @@ import { COLORS } from '../constants/themeColors';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorDisplay from './ErrorDisplay';
 import { STIX_TYPE_KEYS } from '../constants/stixTypes';
-import PopUpModal from './PopUpModal';
 
 /**
  * Returns properties.name for most STIX types, falls back to stix_id for
@@ -43,8 +42,8 @@ function formatDate(d: string | null | undefined) {
  * Pagination: Page numbers controlled by ?page= URL param. Shows PAGE_SIZE
  * results per page with total count from X-Total-Count header.
  *
- * Detail modal: clicking a row navigates to /stix/{id}, opening PopUpModal.
- * The modal self-fetches the full object via api.stixById.
+ * Detail route: clicking a row navigates to /stix/{id}. The parent layout
+ * renders the dedicated StixObjectDetail view for that route.
  */
 export default function StixBrowser() {
   const navigate = useNavigate();
@@ -68,11 +67,6 @@ export default function StixBrowser() {
     setSearchInput(searchQuery);
     setPrevSearchQuery(searchQuery);
   }
-
-  // Derive the selected object ID from the URL path (e.g. /stix/malware--uuid)
-  const objectId = location.pathname.startsWith('/stix/')
-    ? decodeURIComponent(location.pathname.slice('/stix/'.length)) || null
-    : null;
 
   // loading is true whenever URL params have changed but the fetch hasn't settled yet
   const currentKey = `${typeFilter}|${searchQuery}|${currentPage}`;
@@ -231,7 +225,7 @@ export default function StixBrowser() {
                 {objects.map(obj => (
                   <TableRow
                     key={obj.stix_id}
-                    onClick={() => navigate('/stix/' + encodeURIComponent(obj.stix_id) + (typeFilter ? '?type=' + typeFilter : ''))}
+                    onClick={() => navigate('/stix/' + encodeURIComponent(obj.stix_id) + location.search)}
                     sx={{ cursor: 'pointer', '&:hover': { backgroundColor: COLORS.cardBackground, boxShadow: `0 4px 20px ${COLORS.hoverBoxShadow}` } }}
                   >
                     <TableCell sx={{ color: COLORS.textPrimary, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -273,8 +267,6 @@ export default function StixBrowser() {
           )}
         </>
       )}
-
-      <PopUpModal stixId={objectId} onClose={() => navigate('/stix' + (typeFilter ? '?type=' + typeFilter : ''))} />
     </Box>
   );
 }

@@ -537,11 +537,6 @@ export default function StixObjectDetail({ stixId, onDisplayNameChange }: Props)
 
       {!objectLoading && !objectErrorMessage && stix && (
         <>
-          {/* Object name */}
-          <Typography sx={{ color: COLORS.textPrimary, fontFamily: 'monospace', fontSize: '0.9rem', mb: 2, wordBreak: 'break-all' }}>
-            {props.name as string || stix.stix_id}
-          </Typography>
-
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"

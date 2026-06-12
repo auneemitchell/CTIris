@@ -5,6 +5,7 @@ import SectionHeader from './SectionHeader';
 import DashboardTab from './DashboardTab';
 import FeedsTab from './FeedsTab';
 import StixBrowser from './StixBrowser';
+import StixObjectDetail from './StixObjectDetail';
 
 /**
  * Main content area — three-tab layout: Dashboard, Feeds, STIX Objects.
@@ -21,6 +22,9 @@ export default function DashboardBody() {
   const location = useLocation();
   const navigate = useNavigate();
   const tab = location.pathname.startsWith('/feeds') ? 1 : location.pathname.startsWith('/stix') ? 2 : 0;
+  const stixDetailId = location.pathname.startsWith('/stix/')
+    ? decodeURIComponent(location.pathname.slice('/stix/'.length)) || null
+    : null;
 
   return (
     <Box sx={{ bgcolor: COLORS.backgroundContainer, minHeight: '100vh', paddingX: { xs: 2, md: 8 }, paddingY: 2, pb: 10 }}>
@@ -55,11 +59,23 @@ export default function DashboardBody() {
           <FeedsTab />
         </Box>
         <Box sx={{ display: tab === 2 ? 'block' : 'none' }}>
-          <SectionHeader
-            title="STIX OBJECTS"
-            tooltip="A full browser of all STIX objects ingested from your feeds. Filter by type to narrow the list, or search by name or ID. Click any row to view a detailed profile for that object."
-          />
-          <StixBrowser />
+          {stixDetailId ? (
+            <>
+              <SectionHeader
+                title="STIX OBJECT DETAIL"
+                tooltip="Detailed profile for a single STIX object, including metadata, properties, and relationship context in the intelligence graph."
+              />
+              <StixObjectDetail stixId={stixDetailId} />
+            </>
+          ) : (
+            <>
+              <SectionHeader
+                title="STIX OBJECTS"
+                tooltip="A full browser of all STIX objects ingested from your feeds. Filter by type to narrow the list, or search by name or ID. Click any row to view a detailed profile for that object."
+              />
+              <StixBrowser />
+            </>
+          )}
         </Box>
       </Box>
     </Box>
