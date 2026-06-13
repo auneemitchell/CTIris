@@ -19,7 +19,7 @@ interface Props {
  */
 export default function HelpBadge({ tooltip, size = 'md', placement = 'right', sx }: Props) {
   const dim = size === 'md' ? 18 : 15;
-  const iconSize = size === 'md' ? 13 : 11;
+  const iconSize = size === 'md' ? '13px' : '11px';
 
   return (
     <Tooltip title={tooltip} placement={placement} arrow>
