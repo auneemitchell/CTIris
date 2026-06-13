@@ -8,35 +8,55 @@ interface StixDescriptionProps {
 
 
 function renderDescriptionText(text: string) {
-    const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    const tokenRegex = /<code>(.*?)<\/code>|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gs;
     const elements: React.ReactNode[] = [];
     let lastIndex = 0;
     let match;
 
-    while ((match = linkRegex.exec(text)) !== null) {
-        const [, linkText, url] = match;
+    while ((match = tokenRegex.exec(text)) !== null) {
         const matchIndex = match.index;
         if (matchIndex > lastIndex) elements.push(text.substring(lastIndex, matchIndex));
 
-        elements.push(
-            <Link
-                key={url + matchIndex}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                sx={{
-                    color: COLORS.textTertiary ?? '#4fc3f7',
-                    textDecoration: 'underline',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    '&:hover': { color: '#ffffff' }
-                }}
-            >
-                {linkText}
-            </Link>
-        );
-        lastIndex = linkRegex.lastIndex;
+        if (match[1] !== undefined) {
+            elements.push(
+                <Box
+                    key={matchIndex}
+                    component="code"
+                    sx={{
+                        fontFamily: 'monospace',
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        borderRadius: '3px',
+                        padding: '1px 5px',
+                        fontSize: '0.875em',
+                        color: COLORS.textPrimary,
+                    }}
+                >
+                    {match[1]}
+                </Box>
+            );
+        } else {
+            const linkText = match[2];
+            const url = match[3];
+            elements.push(
+                <Link
+                    key={url + matchIndex}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    sx={{
+                        color: COLORS.textTertiary ?? '#4fc3f7',
+                        textDecoration: 'underline',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        '&:hover': { color: '#ffffff' }
+                    }}
+                >
+                    {linkText}
+                </Link>
+            );
+        }
+        lastIndex = tokenRegex.lastIndex;
     }
     if (lastIndex < text.length) elements.push(text.substring(lastIndex));
     return elements;
