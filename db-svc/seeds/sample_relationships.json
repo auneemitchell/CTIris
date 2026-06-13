@@ -9,6 +9,7 @@
       "id": "relationship--e389b418-0c2d-4b91-9794-6b7f321f1bf0",
       "created": "2026-06-10T05:31:57.000Z",
       "modified": "2026-06-10T05:31:57.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--0257b35b-93ef-4a70-80dd-ad5258e6045b",
       "target_ref": "location--a72ce27b-7f1a-4b17-ad17-002295206218"
@@ -19,6 +20,7 @@
       "id": "relationship--d1b45092-d2a3-4ca3-b8e0-073d7a01e7bd",
       "created": "2026-06-10T05:31:57.000Z",
       "modified": "2026-06-10T05:31:57.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--0257b35b-93ef-4a70-80dd-ad5258e6045b",
       "target_ref": "location--5c94c876-ff98-4330-a6c4-837d40d2194a"
@@ -29,6 +31,7 @@
       "id": "relationship--c3553ba7-5ebd-4bde-b965-7d296ab7efb3",
       "created": "2026-06-10T05:31:57.000Z",
       "modified": "2026-06-10T05:31:57.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--0257b35b-93ef-4a70-80dd-ad5258e6045b",
       "target_ref": "location--82833dae-2c36-47b6-95f7-45a5e9248767"
@@ -39,6 +42,7 @@
       "id": "relationship--de5c6faa-4b6b-485d-9db8-e58005769643",
       "created": "2026-06-10T05:31:57.000Z",
       "modified": "2026-06-10T05:31:57.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--0257b35b-93ef-4a70-80dd-ad5258e6045b",
       "target_ref": "location--cf629038-06bd-40a7-a5f5-5bf18bc33910"
@@ -49,6 +53,7 @@
       "id": "relationship--0ecf1b3a-0999-4026-a1fb-4d6089642ad4",
       "created": "2026-06-10T05:31:57.000Z",
       "modified": "2026-06-10T05:31:57.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--0257b35b-93ef-4a70-80dd-ad5258e6045b",
       "target_ref": "location--db9f67f5-729c-4140-a171-2f8966381efe"
@@ -59,6 +64,7 @@
       "id": "relationship--36ee2e6c-5aa2-4a76-a626-80f173f3995c",
       "created": "2026-06-10T05:31:57.000Z",
       "modified": "2026-06-10T05:31:57.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--0c259854-4044-4f6c-ac49-118d484b3e3b",
       "target_ref": "location--b2cdc75c-61c7-48b3-a4b0-ee7960df63e2"
@@ -69,6 +75,7 @@
       "id": "relationship--1a65ce0a-ae61-40ad-8d20-5420a0e80056",
       "created": "2026-06-10T05:41:23.000Z",
       "modified": "2026-06-10T05:41:23.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--a6aba167-5ada-4812-9da1-912c0e73335d",
       "target_ref": "location--9f6fe7b4-482c-4300-a103-944614bd4fb0"
@@ -79,6 +86,7 @@
       "id": "relationship--1cc2ce74-9f6d-4574-9b0a-e321ac44c344",
       "created": "2026-06-10T05:46:11.000Z",
       "modified": "2026-06-10T05:46:11.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--1169ff24-b35f-4d8d-8cf3-643a2834227f",
       "target_ref": "location--3c5740f3-cadc-4200-8d6d-40529fec42a0"
@@ -89,6 +97,7 @@
       "id": "relationship--36876b9e-ed47-4c94-a053-3adbd2165c5e",
       "created": "2026-06-10T05:52:14.000Z",
       "modified": "2026-06-10T05:52:14.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--37764c78-2a99-46d1-a7ea-6454b9bf93a0",
       "target_ref": "location--8fa35ff8-3d69-4ca6-805d-d28be97a81e2"
@@ -99,6 +108,7 @@
       "id": "relationship--41094188-bbed-46fe-a035-71c856b0487f",
       "created": "2026-06-10T05:52:14.000Z",
       "modified": "2026-06-10T05:52:14.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--37764c78-2a99-46d1-a7ea-6454b9bf93a0",
       "target_ref": "location--67c0299a-080e-433d-b541-c81a3cc99cd9"
@@ -109,6 +119,7 @@
       "id": "relationship--9922b37f-43b1-4fab-8af2-0b8e5781957c",
       "created": "2026-06-10T05:52:14.000Z",
       "modified": "2026-06-10T05:52:14.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--37764c78-2a99-46d1-a7ea-6454b9bf93a0",
       "target_ref": "location--bdb9cbdd-c69a-4e69-a7bb-98ab274c6988"
@@ -119,6 +130,7 @@
       "id": "relationship--8bb20707-6524-4687-96c6-c9f1bba5f6af",
       "created": "2026-06-10T05:52:14.000Z",
       "modified": "2026-06-10T05:52:14.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--37764c78-2a99-46d1-a7ea-6454b9bf93a0",
       "target_ref": "location--a72ce27b-7f1a-4b17-ad17-002295206218"
@@ -129,6 +141,7 @@
       "id": "relationship--391aa1cd-bb28-4511-b2dd-75e61094daef",
       "created": "2026-06-10T05:52:14.000Z",
       "modified": "2026-06-10T05:52:14.000Z",
+      "created_by_ref": "identity--2cd8dd8f-2f39-5932-8bcf-4fe231143ea8",
       "relationship_type": "targets",
       "source_ref": "campaign--4b7f9839-4822-4c19-8a1f-70bb61ba97e1",
       "target_ref": "location--db9f67f5-729c-4140-a171-2f8966381efe"
