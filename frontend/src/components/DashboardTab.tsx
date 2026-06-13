@@ -93,40 +93,42 @@ export default function DashboardTab() {
         ))}
       </Grid>
 
-      <Box sx={{ display: 'flex', mt: 3 }}>
+      <Grid container spacing={2} sx={{ mt: 3 }}>
         {/* ── HEATMAP ───────────────────────────────────────────────────────────*/}
-        <Box sx={{ flex: 4, p: 1 }}>
+        <Grid item xs={12} md={8}>
           <SectionHeader
             title="TARGETED COUNTRIES"
             tooltip="Shows countries targeted by STIX objects (threat actors, malware, campaigns, intrusion sets, tools, and attack patterns) via targets relationships. Higher concentrations appear in darker red."
             gutterBottom={false}
           />
           <Heatmap />
-        </Box>
+        </Grid>
 
-        <Box sx = {{ flexDirection: 'row' }}>
+        <Grid item xs={12} md={4}>
           {/* ── TARGETED INDUSTRIES ─────────────────────────────────────────────────────────── */}
-          <Box sx={{ flex: 1, p: 1 }}>
-            <SectionHeader
-              title="TARGETED INDUSTRIES"
-              tooltip="Shows the distribution of industries based on keyword matches within STIX object content."
-              gutterBottom={false}
-            />
-            <TargetedIndustries />
-          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
+            <Box>
+              <SectionHeader
+                title="TARGETED INDUSTRIES"
+                tooltip="Shows the distribution of industries based on keyword matches within STIX object content."
+                gutterBottom={false}
+              />
+              <TargetedIndustries />
+            </Box>
 
-          {/* ── MOST RECENT CAMPAIGNS ─────────────────────────────────────────────────────────── */}
-          <Box sx={{ p: 1, mt: 3 }}>
-            <SectionHeader
-              title="MOST RECENT CAMPAIGNS"
-              tooltip="Shows the top 10 most recent campaigns. Select a campaign to view detailed intelligence."
-              gutterBottom={false}
-            />
-            <MostRecentCampaigns />
+            {/* ── MOST RECENT CAMPAIGNS ─────────────────────────────────────────────────────────── */}
+            <Box>
+              <SectionHeader
+                title="MOST RECENT CAMPAIGNS"
+                tooltip="Shows the top 10 most recent campaigns. Select a campaign to view detailed intelligence."
+                gutterBottom={false}
+              />
+              <MostRecentCampaigns />
+            </Box>
           </Box>
-        </Box>
+        </Grid>
 
-      </Box>
+      </Grid>
 
       {/* ── WIDGETS ─────────────────────────────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mt: 2 }}>
