@@ -407,6 +407,14 @@ class TestInsertFeed:
 # ---------------------------------------------------------------------------
 
 class TestGetEngine:
+    @pytest.fixture(autouse=True)
+    def reset_engine_singleton(self, monkeypatch):
+        """Reset the module-level _engine singleton before each test so that
+        get_engine() re-evaluates DATABASE_URL rather than returning a cached
+        engine from a previous test."""
+        import db
+        monkeypatch.setattr(db, "_engine", None)
+
     def test_returns_engine(self):
         """get_engine() should return a SQLAlchemy Engine."""
         import sqlalchemy as sa

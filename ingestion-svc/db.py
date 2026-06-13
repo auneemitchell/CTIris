@@ -34,22 +34,24 @@ feeds_table = Feed.__table__
 stix_objects_table = StixObject.__table__
 ingestion_log_table = IngestionLog.__table__
 
+_engine: sa.Engine | None = None
+
 
 def get_engine() -> sa.Engine:
-    """Create a SQLAlchemy engine from the ``DATABASE_URL`` environment variable.
+    """Return the shared SQLAlchemy engine, creating it on first call.
 
-    Falls back to the Docker Compose service hostname when the variable is not
-    set, which is the common case when running inside the container.
-
-    Note: this creates a new engine on every call.  For the ingestion service's
-    usage pattern (one sync cycle per hour) the overhead is negligible, but
-    callers that need connection pooling should cache the returned engine.
+    Caches the engine in a module-level singleton so all callers share one
+    connection pool for the lifetime of the process.  Falls back to the
+    Docker Compose service hostname when ``DATABASE_URL`` is not set.
     """
-    url = os.environ.get(
-        "DATABASE_URL",
-        "postgresql+psycopg://postgres:postgres@postgres:5432/ctiris",
-    )
-    return sa.create_engine(url, pool_pre_ping=True)
+    global _engine
+    if _engine is None:
+        url = os.environ.get(
+            "DATABASE_URL",
+            "postgresql+psycopg://postgres:postgres@postgres:5432/ctiris",
+        )
+        _engine = sa.create_engine(url, pool_pre_ping=True)
+    return _engine
 
 
 def _parse_ts(raw: object) -> datetime | None:
