@@ -25,7 +25,7 @@ import os
 import sys
 import tarfile
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime
 
 import sqlalchemy as sa
 
@@ -136,6 +136,7 @@ def upsert(engine: sa.Engine, objects: list[dict]) -> int:
 
 _SAMPLE_BUNDLE = os.path.join(os.path.dirname(__file__), "seeds", "sample_relationships.json")
 _SECTOR_IDENTITIES = os.path.join(os.path.dirname(__file__), "seeds", "sector_identities.json")
+_SECTOR_RELATIONSHIPS = os.path.join(os.path.dirname(__file__), "seeds", "sector_relationships.json")
 
 
 def seed_local_bundle(engine: sa.Engine, path: str) -> None:
@@ -196,6 +197,7 @@ def main() -> None:
 
     _seed_type(engine, archive_bytes, "location")
     seed_sector_identities(engine, _SECTOR_IDENTITIES)
+    seed_local_bundle(engine, _SECTOR_RELATIONSHIPS)
     seed_local_bundle(engine, _SAMPLE_BUNDLE)
 
 
