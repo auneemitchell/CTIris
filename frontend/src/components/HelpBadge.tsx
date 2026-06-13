@@ -1,5 +1,6 @@
-import { Tooltip, Typography } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 import type { TooltipProps } from '@mui/material';
+import { Visibility as VisibilityIcon } from '@mui/icons-material';
 import { COLORS } from '../constants/themeColors';
 
 interface Props {
@@ -18,13 +19,12 @@ interface Props {
  */
 export default function HelpBadge({ tooltip, size = 'md', placement = 'right', sx }: Props) {
   const dim = size === 'md' ? 18 : 15;
-  const fontSize = size === 'md' ? '0.7rem' : '0.6rem';
+  const iconSize = size === 'md' ? 13 : 11;
 
   return (
     <Tooltip title={tooltip} placement={placement} arrow>
-      <Typography sx={{
+      <Box sx={{
         color: COLORS.textMuted,
-        fontSize,
         bgcolor: 'rgba(255,255,255,0.07)',
         borderRadius: '50%',
         width: dim,
@@ -34,10 +34,11 @@ export default function HelpBadge({ tooltip, size = 'md', placement = 'right', s
         justifyContent: 'center',
         cursor: 'help',
         flexShrink: 0,
-        fontFamily: 'monospace',
         userSelect: 'none',
         ...sx,
-      }}>?</Typography>
+      }}>
+        <VisibilityIcon sx={{ fontSize: iconSize }} />
+      </Box>
     </Tooltip>
   );
 }
