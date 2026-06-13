@@ -10,6 +10,7 @@
     "psycopg",
     "alembic",
     "recharts",
-    "browsable"
+    "browsable",
+    "upsert"
   ]
 }
