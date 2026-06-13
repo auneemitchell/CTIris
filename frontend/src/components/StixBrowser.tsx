@@ -25,7 +25,10 @@ function getName(obj: StixObject): string {
 /** Returns '—' when the date is missing rather than rendering 'Invalid Date'. */
 function formatDate(d: string | null | undefined) {
   if (!d) return '—';
-  return new Date(d).toLocaleString();
+  const date = new Date(d);
+  const datePart = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  const timePart = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `${datePart} ${timePart}`;
 }
 
 /**
