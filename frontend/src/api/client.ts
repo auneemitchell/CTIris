@@ -185,6 +185,10 @@ export const api = {
   /** Fetch object counts grouped by STIX type — one DB query, no limit. */
   stixCounts: () => get<Record<string, number>>('/stix/counts'),
 
+  /** Fetch targeting counts per industry sector, driven by 'targets' relationships to class-type identity objects. */
+  sectorTargeting: (signal?: AbortSignal) =>
+    get<{ sector_name: string; count: number }[]>('/stix/sector-targeting', signal),
+
   /**
    * Fetch the top entities ranked by relationship count.
    * Accepts one type or an array to rank across multiple types in one query.
