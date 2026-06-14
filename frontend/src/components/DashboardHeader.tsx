@@ -9,20 +9,14 @@ import type { Feed } from '../api/client';
 /**
  * App header — branding and live status chips.
  *
- * - Live STATUS chip: hits /api/health on mount, shows ONLINE (green) or OFFLINE (red)
  * - Live ACTIVE FEEDS chip: counts enabled feeds from /api/feeds
  * - Educational ? tooltip on the subtitle defining what CTI is
- *
- * Chips are hidden until the first fetch resolves to avoid a flash of
- * stale hardcoded values.
  */
 export default function DashboardHeader() {
   const [feeds, setFeeds] = useState<Feed[]>([]);
-  const [healthy, setHealthy] = useState<boolean | null>(null);
 
   useEffect(() => {
     api.feeds().then(setFeeds).catch(() => {});
-    api.health().then(r => setHealthy(r.status === 'ok')).catch(() => setHealthy(false));
   }, []);
 
   const activeCount = feeds.filter(f => f.enabled).length;
@@ -50,15 +44,6 @@ export default function DashboardHeader() {
         </Box>
       </Box>
       <Box sx={{ display: 'flex', gap: 2 }}>
-        {healthy !== null && (
-          <Chip
-            label={healthy ? 'STATUS: ONLINE' : 'STATUS: OFFLINE'}
-            color={healthy ? 'success' : 'error'}
-            variant="outlined"
-            size="small"
-            sx={{ fontFamily: 'monospace' }}
-          />
-        )}
         {feeds.length > 0 && (
           <Chip
             label={`ACTIVE FEEDS: ${activeCount}`}
