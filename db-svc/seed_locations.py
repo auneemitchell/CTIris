@@ -134,7 +134,7 @@ def upsert(engine: sa.Engine, objects: list[dict]) -> int:
     return after - before
 
 
-_SAMPLE_BUNDLE = os.path.join(os.path.dirname(__file__), "seeds", "sample_relationships.json")
+_LOCATION_RELATIONSHIPS = os.path.join(os.path.dirname(__file__), "seeds", "location_relationships.json")
 _SECTOR_IDENTITIES = os.path.join(os.path.dirname(__file__), "seeds", "sector_identities.json")
 
 
@@ -145,6 +145,7 @@ def seed_local_bundle(engine: sa.Engine, path: str) -> None:
     objects are silently skipped and only new ones are inserted.
     """
     if not os.path.exists(path):
+        print(f"Seed file not found, skipping: {path}", file=sys.stderr)
         return
 
     with open(path) as f:
@@ -154,9 +155,10 @@ def seed_local_bundle(engine: sa.Engine, path: str) -> None:
     if not objects:
         return
 
+    label = os.path.basename(path)
     inserted = upsert(engine, objects)
     skipped = len(objects) - inserted
-    print(f"Sample bundle: {inserted} inserted, {skipped} already existed (skipped).")
+    print(f"{label}: {inserted} inserted, {skipped} already existed (skipped).")
 
 
 def seed_sector_identities(engine: sa.Engine, path: str) -> None:
@@ -196,7 +198,7 @@ def main() -> None:
 
     _seed_type(engine, archive_bytes, "location")
     seed_sector_identities(engine, _SECTOR_IDENTITIES)
-    seed_local_bundle(engine, _SAMPLE_BUNDLE)
+    seed_local_bundle(engine, _LOCATION_RELATIONSHIPS)
 
 
 if __name__ == "__main__":
