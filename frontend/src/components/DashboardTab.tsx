@@ -106,15 +106,14 @@ export default function DashboardTab() {
 
         <Grid item xs={12} md={4}>
           {/* ── TARGETED INDUSTRIES ─────────────────────────────────────────────────────────── */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
-            <Box>
-              <SectionHeader
-                title="TARGETED INDUSTRIES"
-                tooltip="Shows the distribution of industries based on keyword matches within STIX object content."
-                gutterBottom={false}
-              />
-              <TargetedIndustries />
-            </Box>
+          <Box sx={{ flex: 1, p: 1 }}>
+            <SectionHeader
+              title="TARGETED INDUSTRIES"
+              tooltip="Shows the distribution of industry sectors targeted by other STIX objects, like campaigns."
+              gutterBottom={false}
+            />
+            <TargetedIndustries />
+          </Box>
 
             {/* ── MOST RECENT CAMPAIGNS ─────────────────────────────────────────────────────────── */}
             <Box>
@@ -125,9 +124,7 @@ export default function DashboardTab() {
               />
               <MostRecentCampaigns />
             </Box>
-          </Box>
         </Grid>
-
       </Grid>
 
       {/* ── WIDGETS ─────────────────────────────────────────────────────────── */}

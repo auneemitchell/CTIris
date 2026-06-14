@@ -161,6 +161,37 @@ def count_stix(conn=Depends(get_db)):
     return {row["type"]: row["count"] for row in rows}
 
 
+@app.get("/stix/sector-targeting")
+def sector_targeting(conn=Depends(get_db)):
+    """Return the count of 'targets' relationships per industry sector identity.
+
+    Only counts relationships where the target is an identity with
+    identity_class='class', which are the canonical sector identity objects.
+
+    Returns:
+        List of {sector_name, count} dicts, descending by count.
+
+    Example:
+        GET /stix/sector-targeting
+    """
+    stmt = sa.text("""
+        SELECT
+            identity.properties->>'name' AS sector_name,
+            COUNT(*)                     AS count
+        FROM stix_objects rel
+        JOIN stix_objects identity
+          ON identity.stix_id = rel.properties->>'target_ref'
+        WHERE rel.type = 'relationship'
+          AND rel.properties->>'relationship_type' = 'targets'
+          AND identity.type = 'identity'
+          AND identity.properties->>'identity_class' = 'class'
+        GROUP BY identity.properties->>'name'
+        ORDER BY count DESC
+    """)
+    rows = conn.execute(stmt).mappings().fetchall()
+    return [dict(row) for row in rows]
+
+
 @app.get("/stix/top-by-relationships")
 def top_by_relationships(
     type: list[str] = Query(...),

@@ -1,85 +1,163 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import { COLORS } from '../constants/themeColors';
-import { api, type StixObject } from '../api/client';
+import { api } from '../api/client';
 import LoadingSpinner from './LoadingSpinner';
-import { PolarGrid, PolarAngleAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 
-
-const INDUSTRY_KEYWORDS: Record<string, string[]> = {
-    'Consumer & Social': ['retail', 'hospitality-leisure', 'entertainment'],
-    'Financial': ['financial-services', 'insurance'],
-    'Government': ['government-national', 'government-regional', 'government-local', 'government-public-services'],
-    'Healthcare': ['healthcare', 'pharmaceutical'],
-    'Energy': ['energy', 'utilities'],
-    'Technology': ['communications', 'technology', 'telecommunications'],
-    'Natural Resources': ['agriculture', 'mining'],
-    'Transportation': ['transportation'],
-    'Industrial': ['manufacturing', 'construction', 'aerospace', 'automotive', 'defense'],
-    'Education': ['education'],
-    'Non-Profit': ['non-profit'],
-    'Infrastructure': ['infrastructure'],
-};
-
-interface ChartDataType {
-    id: string;
-    value: number;
-    label: string;
+interface SectorDatum {
+    name: string;
+    size: number;
+    [key: string]: unknown;
 }
 
-interface StixProperties {
-    description?: string;
-    aliases?: string[];
-    x_mitre_aliases?: string[];
+/** Colors cycled across treemap cells by index. */
+const CELL_COLORS = [
+    '#A78BFA', // lavender purple
+    '#22d3ee', // cyan
+    '#f837ab', // neon pink
+    '#0088FE', // electric blue
+    '#00C49F', // cyber teal
+    '#ff6b6b', // coral red
+];
+
+/**
+ * Splits `text` into lines that fit within `maxChars` characters.
+ * Single words longer than `maxChars` are truncated with an ellipsis.
+ */
+function wrapText(text: string, maxChars: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let current = '';
+    for (const word of words) {
+        const w = word.length > maxChars ? word.slice(0, maxChars - 1) + '…' : word;
+        if (!current) {
+            current = w;
+        } else if ((current + ' ' + w).length <= maxChars) {
+            current += ' ' + w;
+        } else {
+            lines.push(current);
+            current = w;
+        }
+    }
+    if (current) lines.push(current);
+    return lines;
 }
 
 /**
- * Functional component that shows a Radar Chart of targeted industries based on keyword matches in intrusion set STIX objects.
- * @returns a radar chart showing industry distributions
+ * Custom Recharts Treemap cell renderer. Receives layout props injected by Recharts
+ * (x, y, width, height, index, depth) plus the data item fields (name, size).
+ * Depth 0 is the synthetic root node — rendered as an empty group to suppress it.
+ */
+const TreemapCell = (props: {
+    x?: number; y?: number; width?: number; height?: number;
+    name?: string; size?: number; index?: number; depth?: number;
+}) => {
+    const { x = 0, y = 0, width = 0, height = 0, name = '', size = 0, index = 0, depth = 0 } = props;
+    if (depth === 0) return <g />;
+    const fill = CELL_COLORS[index % CELL_COLORS.length];
+    const clipId = `tc-${index}`;
+
+    return (
+        <g>
+            <defs>
+                <clipPath id={clipId}>
+                    <rect x={x + 2} y={y + 2} width={width - 4} height={height - 4} />
+                </clipPath>
+            </defs>
+            {/* glow layer */}
+            <rect
+                x={x + 1}
+                y={y + 1}
+                width={width - 2}
+                height={height - 2}
+                fill="none"
+                stroke={fill}
+                strokeWidth={4}
+                strokeOpacity={0.35}
+                style={{ filter: 'blur(4px)' }}
+            />
+            {/* cell */}
+            <rect
+                x={x + 1}
+                y={y + 1}
+                width={width - 2}
+                height={height - 2}
+                fill={fill}
+                fillOpacity={0.08}
+                stroke={fill}
+                strokeWidth={1}
+                strokeOpacity={1}
+            />
+            {width > 48 && height > 24 && (() => {
+                const fontSize = Math.min(12, width / 8);
+                const charsPerLine = Math.floor((width - 8) / (fontSize * 0.6));
+                const lines = wrapText(name, charsPerLine);
+                const lineHeight = fontSize + 3;
+                const showCount = height > 44;
+                const blockHeight = lines.length * lineHeight;
+                const startY = y + height / 2 - blockHeight / 2 + lineHeight / 2 - (showCount ? 8 : 0);
+                return (
+                    <>
+                        {lines.map((line, i) => (
+                            <text
+                                key={i}
+                                x={x + width / 2}
+                                y={startY + i * lineHeight}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill={COLORS.textPrimary}
+                                fontSize={fontSize}
+                                clipPath={`url(#${clipId})`}
+                                style={{ pointerEvents: 'none' }}
+                            >
+                                {line}
+                            </text>
+                        ))}
+                        {showCount && (
+                            <text
+                                x={x + width / 2}
+                                y={startY + lines.length * lineHeight + 4}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill={COLORS.textMuted}
+                                fontSize={Math.min(11, width / 9)}
+                                clipPath={`url(#${clipId})`}
+                                style={{ pointerEvents: 'none' }}
+                            >
+                                {size}
+                            </text>
+                        )}
+                    </>
+                );
+            })()}
+        </g>
+    );
+};
+
+/**
+ * Displays a treemap of industry sectors targeted by campaigns, ranked by the
+ * number of STIX `targets` relationships pointing at each sector identity object.
+ * Data is fetched from the `/stix/sector-targeting` endpoint.
  */
 export default function TargetedIndustries() {
-    const [data, setData] = useState<ChartDataType[]>([]);
+    const [data, setData] = useState<SectorDatum[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const controller = new AbortController();
 
-        api.stix('intrusion-set', 1000, 0, controller.signal)
-            .then((results: StixObject[]) => {
-                const counts: Record<string, number> = {};
-
-                Object.keys(INDUSTRY_KEYWORDS).forEach(key => counts[key] = 0);
-
-
-                results.forEach((obj) => {
-                    const props = (obj.properties ?? obj) as StixProperties;
-                    const text = [
-                        props.description ?? '',
-                        (props.aliases ?? []).join(' '),
-                        (props.x_mitre_aliases ?? []).join(' ')
-                    ].join(' ').toLowerCase();
-
-                    for (const [industry, keywords] of Object.entries(INDUSTRY_KEYWORDS)) {
-                        if (keywords.some(kw => new RegExp(`\\b${kw}\\b`, 'i').test(text))) {
-                            counts[industry]++;
-                        }
-                    }
-
-                });
-
-                const formattedData = Object.entries(counts)
-                    .filter(([, entry]) => entry > 0)
-                    .map(([name, value]) => ({
-                        id: name,
-                        value,
-                        label: name
-                    }));
-
+        api.sectorTargeting(controller.signal)
+            .then((results) => {
+                const formattedData = results.map(({ sector_name, count }) => ({
+                    name: sector_name.replace(/ Sector$/i, ''),
+                    size: count,
+                }));
                 setData(formattedData);
             })
             .catch((err) => {
                 if (err.name !== 'AbortError') {
-                    console.error('Error fetching intrusion sets:', err);
+                    console.error('Error fetching sector targeting data:', err);
                 }
             })
             .finally(() => setLoading(false));
@@ -88,6 +166,25 @@ export default function TargetedIndustries() {
     }, []);
 
     if (loading) return <LoadingSpinner />;
+
+    if (!data.length) return (
+        <Paper
+            sx={{
+                p: 1,
+                bgcolor: COLORS.headerBackground,
+                borderRadius: 2,
+                border: `1px solid ${COLORS.dataContainerBorder}`,
+                height: '32vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+        >
+            <Typography sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                No sector targeting data available
+            </Typography>
+        </Paper>
+    );
 
     return (
         <Paper
@@ -100,34 +197,33 @@ export default function TargetedIndustries() {
         >
             <Box sx={{ width: '100%', height: '26vh' }}>
                 <ResponsiveContainer width='100%' height='100%'>
-                    <RadarChart
+                    <Treemap
                         data={data}
-                        margin={{
-                            top: 10,
-                            right: 60,
-                            bottom: 10,
-                            left: 60
-                        }}
+                        dataKey="size"
+                        nameKey="name"
+                        content={<TreemapCell />}
                     >
-                        <PolarGrid stroke={COLORS.dataContainerBorder} />
-                        <PolarAngleAxis dataKey='label' tick={{ fill: COLORS.textMuted, fontSize: 12 }} />
-                        <Radar
-                            name='Intrusion Sets'
-                            dataKey='value'
-                            stroke={COLORS.chartColorOne}
-                            fill={COLORS.chartColorOne}
-                            fillOpacity={0.35}
-                        />
                         <Tooltip
-                            contentStyle={{
-                                backgroundColor: COLORS.headerBackground,
-                                border: `1px solid ${COLORS.dataContainerBorder}`,
-                                borderRadius: 4,
-                                color: COLORS.textPrimary,
-                                fontSize: 12,
+                            content={({ payload }) => {
+                                if (!payload?.length) return null;
+                                const item = payload[0].payload as SectorDatum;
+                                return (
+                                    <Box sx={{
+                                        bgcolor: COLORS.headerBackground,
+                                        border: `1px solid ${COLORS.dataContainerBorder}`,
+                                        borderRadius: 1,
+                                        px: 1.5,
+                                        py: 1,
+                                        fontSize: 12,
+                                        color: COLORS.textPrimary,
+                                    }}>
+                                        <div>{item.name}</div>
+                                        <div style={{ color: COLORS.textMuted }}>{item.size} relationship{item.size !== 1 ? 's' : ''}</div>
+                                    </Box>
+                                );
                             }}
                         />
-                    </RadarChart>
+                    </Treemap>
                 </ResponsiveContainer>
             </Box>
         </Paper>
