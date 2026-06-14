@@ -109,7 +109,7 @@ export default function DashboardTab() {
           <Box sx={{ flex: 1, p: 1 }}>
             <SectionHeader
               title="TARGETED INDUSTRIES"
-              tooltip="Shows the distribution of industries based on keyword matches within STIX object content."
+              tooltip="Shows the distribution of industries targeted by campaigns, based on STIX targets relationships to sector identity objects."
               gutterBottom={false}
             />
             <TargetedIndustries />
