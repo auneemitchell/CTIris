@@ -11,6 +11,7 @@ interface SectorDatum {
     [key: string]: unknown;
 }
 
+/** Colors cycled across treemap cells by index. */
 const CELL_COLORS = [
     '#A78BFA', // lavender purple
     '#22d3ee', // cyan
@@ -20,6 +21,10 @@ const CELL_COLORS = [
     '#ff6b6b', // coral red
 ];
 
+/**
+ * Splits `text` into lines that fit within `maxChars` characters.
+ * Single words longer than `maxChars` are truncated with an ellipsis.
+ */
 function wrapText(text: string, maxChars: number): string[] {
     const words = text.split(' ');
     const lines: string[] = [];
@@ -39,6 +44,11 @@ function wrapText(text: string, maxChars: number): string[] {
     return lines;
 }
 
+/**
+ * Custom Recharts Treemap cell renderer. Receives layout props injected by Recharts
+ * (x, y, width, height, index, depth) plus the data item fields (name, size).
+ * Depth 0 is the synthetic root node — rendered as an empty group to suppress it.
+ */
 const TreemapCell = (props: {
     x?: number; y?: number; width?: number; height?: number;
     name?: string; size?: number; index?: number; depth?: number;
@@ -125,6 +135,11 @@ const TreemapCell = (props: {
     );
 };
 
+/**
+ * Displays a treemap of industry sectors targeted by campaigns, ranked by the
+ * number of STIX `targets` relationships pointing at each sector identity object.
+ * Data is fetched from the `/stix/sector-targeting` endpoint.
+ */
 export default function TargetedIndustries() {
     const [data, setData] = useState<SectorDatum[]>([]);
     const [loading, setLoading] = useState(true);
