@@ -12,14 +12,12 @@ interface SectorDatum {
 }
 
 const CELL_COLORS = [
-    COLORS.chartColorOne,
-    COLORS.chartColorTwo,
-    COLORS.chartColorThree,
-    COLORS.chartColorFour,
-    COLORS.chartColorFive,
-    COLORS.chartColorSix,
-    COLORS.chartColorSeven,
-    COLORS.chartColorEight,
+    '#A78BFA', // lavender purple
+    '#22d3ee', // cyan
+    '#f837ab', // neon pink
+    '#0088FE', // electric blue
+    '#00C49F', // cyber teal
+    '#ff6b6b', // coral red
 ];
 
 const TreemapCell = (props: {
@@ -38,16 +36,29 @@ const TreemapCell = (props: {
                     <rect x={x + 2} y={y + 2} width={width - 4} height={height - 4} />
                 </clipPath>
             </defs>
+            {/* glow layer */}
+            <rect
+                x={x + 1}
+                y={y + 1}
+                width={width - 2}
+                height={height - 2}
+                fill="none"
+                stroke={fill}
+                strokeWidth={4}
+                strokeOpacity={0.35}
+                style={{ filter: 'blur(4px)' }}
+            />
+            {/* cell */}
             <rect
                 x={x + 1}
                 y={y + 1}
                 width={width - 2}
                 height={height - 2}
                 fill={fill}
-                fillOpacity={0.45}
+                fillOpacity={0.08}
                 stroke={fill}
                 strokeWidth={1}
-                strokeOpacity={0.8}
+                strokeOpacity={1}
             />
             {width > 48 && height > 24 && (
                 <text
