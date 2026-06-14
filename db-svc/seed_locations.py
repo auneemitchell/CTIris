@@ -7,7 +7,7 @@ Does three things in order:
    regions). Existing rows are left untouched (ON CONFLICT DO NOTHING).
 2. Upserts the canonical industry-sector-ov identity objects from
    seeds/sector_identities.json (one identity per sector, identity_class=class).
-3. Upserts any additional seed data from seeds/sample_relationships.json.
+3. Upserts any additional seed data from seeds/location_relationships.json.
 
 Usage:
     docker compose run --rm db-svc python seed_locations.py
