@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import { COLORS } from '../constants/themeColors';
 import { api } from '../api/client';
 import LoadingSpinner from './LoadingSpinner';
@@ -151,6 +151,25 @@ export default function TargetedIndustries() {
     }, []);
 
     if (loading) return <LoadingSpinner />;
+
+    if (!data.length) return (
+        <Paper
+            sx={{
+                p: 1,
+                bgcolor: COLORS.headerBackground,
+                borderRadius: 2,
+                border: `1px solid ${COLORS.dataContainerBorder}`,
+                height: '32vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+        >
+            <Typography sx={{ color: COLORS.textMuted, fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                No sector targeting data available
+            </Typography>
+        </Paper>
+    );
 
     return (
         <Paper
