@@ -124,9 +124,7 @@ export default function DashboardTab() {
               />
               <MostRecentCampaigns />
             </Box>
-          </Box>
         </Grid>
-
       </Grid>
 
       {/* ── WIDGETS ─────────────────────────────────────────────────────────── */}
