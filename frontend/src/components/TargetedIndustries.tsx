@@ -3,16 +3,86 @@ import { Box, Paper } from '@mui/material';
 import { COLORS } from '../constants/themeColors';
 import { api } from '../api/client';
 import LoadingSpinner from './LoadingSpinner';
-import { PolarGrid, PolarAngleAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 
-interface ChartDataType {
-    id: string;
-    value: number;
-    label: string;
+interface SectorDatum {
+    name: string;
+    size: number;
+    [key: string]: unknown;
 }
 
+const CELL_COLORS = [
+    COLORS.chartColorOne,
+    COLORS.chartColorTwo,
+    COLORS.chartColorThree,
+    COLORS.chartColorFour,
+    COLORS.chartColorFive,
+    COLORS.chartColorSix,
+    COLORS.chartColorSeven,
+    COLORS.chartColorEight,
+];
+
+const TreemapCell = (props: {
+    x?: number; y?: number; width?: number; height?: number;
+    name?: string; size?: number; index?: number; depth?: number;
+}) => {
+    const { x = 0, y = 0, width = 0, height = 0, name = '', size = 0, index = 0, depth = 0 } = props;
+    if (depth === 0) return <g />;
+    const fill = CELL_COLORS[index % CELL_COLORS.length];
+    const clipId = `tc-${index}`;
+
+    return (
+        <g>
+            <defs>
+                <clipPath id={clipId}>
+                    <rect x={x + 2} y={y + 2} width={width - 4} height={height - 4} />
+                </clipPath>
+            </defs>
+            <rect
+                x={x + 1}
+                y={y + 1}
+                width={width - 2}
+                height={height - 2}
+                fill={fill}
+                fillOpacity={0.45}
+                stroke={fill}
+                strokeWidth={1}
+                strokeOpacity={0.8}
+            />
+            {width > 48 && height > 24 && (
+                <text
+                    x={x + width / 2}
+                    y={y + height / 2 - (height > 44 ? 8 : 0)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={COLORS.textPrimary}
+                    fontSize={Math.min(12, width / 8)}
+                    clipPath={`url(#${clipId})`}
+                    style={{ pointerEvents: 'none' }}
+                >
+                    {name}
+                </text>
+            )}
+            {width > 48 && height > 44 && (
+                <text
+                    x={x + width / 2}
+                    y={y + height / 2 + 10}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={COLORS.textMuted}
+                    fontSize={Math.min(11, width / 9)}
+                    clipPath={`url(#${clipId})`}
+                    style={{ pointerEvents: 'none' }}
+                >
+                    {size}
+                </text>
+            )}
+        </g>
+    );
+};
+
 export default function TargetedIndustries() {
-    const [data, setData] = useState<ChartDataType[]>([]);
+    const [data, setData] = useState<SectorDatum[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -21,9 +91,8 @@ export default function TargetedIndustries() {
         api.sectorTargeting(controller.signal)
             .then((results) => {
                 const formattedData = results.map(({ sector_name, count }) => ({
-                    id: sector_name,
-                    value: count,
-                    label: sector_name,
+                    name: sector_name.replace(/ Sector$/i, ''),
+                    size: count,
                 }));
                 setData(formattedData);
             })
@@ -50,34 +119,33 @@ export default function TargetedIndustries() {
         >
             <Box sx={{ width: '100%', height: '32vh' }}>
                 <ResponsiveContainer width='100%' height='100%'>
-                    <RadarChart
+                    <Treemap
                         data={data}
-                        margin={{
-                            top: 10,
-                            right: 60,
-                            bottom: 10,
-                            left: 60
-                        }}
+                        dataKey="size"
+                        nameKey="name"
+                        content={<TreemapCell />}
                     >
-                        <PolarGrid stroke={COLORS.dataContainerBorder} />
-                        <PolarAngleAxis dataKey='label' tick={{ fill: COLORS.textMuted, fontSize: 12 }} />
-                        <Radar
-                            name='Targeting relationships'
-                            dataKey='value'
-                            stroke={COLORS.chartColorOne}
-                            fill={COLORS.chartColorOne}
-                            fillOpacity={0.35}
-                        />
                         <Tooltip
-                            contentStyle={{
-                                backgroundColor: COLORS.headerBackground,
-                                border: `1px solid ${COLORS.dataContainerBorder}`,
-                                borderRadius: 4,
-                                color: COLORS.textPrimary,
-                                fontSize: 12,
+                            content={({ payload }) => {
+                                if (!payload?.length) return null;
+                                const item = payload[0].payload as SectorDatum;
+                                return (
+                                    <Box sx={{
+                                        bgcolor: COLORS.headerBackground,
+                                        border: `1px solid ${COLORS.dataContainerBorder}`,
+                                        borderRadius: 1,
+                                        px: 1.5,
+                                        py: 1,
+                                        fontSize: 12,
+                                        color: COLORS.textPrimary,
+                                    }}>
+                                        <div>{item.name}</div>
+                                        <div style={{ color: COLORS.textMuted }}>{item.size} relationship{item.size !== 1 ? 's' : ''}</div>
+                                    </Box>
+                                );
                             }}
                         />
-                    </RadarChart>
+                    </Treemap>
                 </ResponsiveContainer>
             </Box>
         </Paper>
