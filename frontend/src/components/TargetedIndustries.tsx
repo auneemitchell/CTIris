@@ -20,6 +20,25 @@ const CELL_COLORS = [
     '#ff6b6b', // coral red
 ];
 
+function wrapText(text: string, maxChars: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let current = '';
+    for (const word of words) {
+        const w = word.length > maxChars ? word.slice(0, maxChars - 1) + '…' : word;
+        if (!current) {
+            current = w;
+        } else if ((current + ' ' + w).length <= maxChars) {
+            current += ' ' + w;
+        } else {
+            lines.push(current);
+            current = w;
+        }
+    }
+    if (current) lines.push(current);
+    return lines;
+}
+
 const TreemapCell = (props: {
     x?: number; y?: number; width?: number; height?: number;
     name?: string; size?: number; index?: number; depth?: number;
@@ -60,34 +79,48 @@ const TreemapCell = (props: {
                 strokeWidth={1}
                 strokeOpacity={1}
             />
-            {width > 48 && height > 24 && (
-                <text
-                    x={x + width / 2}
-                    y={y + height / 2 - (height > 44 ? 8 : 0)}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fill={COLORS.textPrimary}
-                    fontSize={Math.min(12, width / 8)}
-                    clipPath={`url(#${clipId})`}
-                    style={{ pointerEvents: 'none' }}
-                >
-                    {name}
-                </text>
-            )}
-            {width > 48 && height > 44 && (
-                <text
-                    x={x + width / 2}
-                    y={y + height / 2 + 10}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fill={COLORS.textMuted}
-                    fontSize={Math.min(11, width / 9)}
-                    clipPath={`url(#${clipId})`}
-                    style={{ pointerEvents: 'none' }}
-                >
-                    {size}
-                </text>
-            )}
+            {width > 48 && height > 24 && (() => {
+                const fontSize = Math.min(12, width / 8);
+                const charsPerLine = Math.floor((width - 8) / (fontSize * 0.6));
+                const lines = wrapText(name, charsPerLine);
+                const lineHeight = fontSize + 3;
+                const showCount = height > 44;
+                const blockHeight = lines.length * lineHeight;
+                const startY = y + height / 2 - blockHeight / 2 + lineHeight / 2 - (showCount ? 8 : 0);
+                return (
+                    <>
+                        {lines.map((line, i) => (
+                            <text
+                                key={i}
+                                x={x + width / 2}
+                                y={startY + i * lineHeight}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill={COLORS.textPrimary}
+                                fontSize={fontSize}
+                                clipPath={`url(#${clipId})`}
+                                style={{ pointerEvents: 'none' }}
+                            >
+                                {line}
+                            </text>
+                        ))}
+                        {showCount && (
+                            <text
+                                x={x + width / 2}
+                                y={startY + lines.length * lineHeight + 4}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill={COLORS.textMuted}
+                                fontSize={Math.min(11, width / 9)}
+                                clipPath={`url(#${clipId})`}
+                                style={{ pointerEvents: 'none' }}
+                            >
+                                {size}
+                            </text>
+                        )}
+                    </>
+                );
+            })()}
         </g>
     );
 };
