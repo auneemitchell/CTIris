@@ -146,6 +146,7 @@ def seed_local_bundle(engine: sa.Engine, path: str) -> None:
     objects are silently skipped and only new ones are inserted.
     """
     if not os.path.exists(path):
+        print(f"Seed file not found, skipping: {path}", file=sys.stderr)
         return
 
     with open(path) as f:
@@ -155,9 +156,10 @@ def seed_local_bundle(engine: sa.Engine, path: str) -> None:
     if not objects:
         return
 
+    label = os.path.basename(path)
     inserted = upsert(engine, objects)
     skipped = len(objects) - inserted
-    print(f"Sample bundle: {inserted} inserted, {skipped} already existed (skipped).")
+    print(f"{label}: {inserted} inserted, {skipped} already existed (skipped).")
 
 
 def seed_sector_identities(engine: sa.Engine, path: str) -> None:
