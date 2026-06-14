@@ -195,7 +195,7 @@ export default function TargetedIndustries() {
                 border: `1px solid ${COLORS.dataContainerBorder}`
             }}
         >
-            <Box sx={{ width: '100%', height: '32vh' }}>
+            <Box sx={{ width: '100%', height: '26vh' }}>
                 <ResponsiveContainer width='100%' height='100%'>
                     <Treemap
                         data={data}
